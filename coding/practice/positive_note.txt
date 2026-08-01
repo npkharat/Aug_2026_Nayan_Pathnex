@@ -1,0 +1,6 @@
+###########################
+# Sheelam Param Bhushanam #
+###########################
+
+This repository is for daily practice. Use it wisely and consistently.
+Practice code here
