@@ -1,0 +1,32 @@
+###
+Task - Install Nginx and Docker, Start the Docker Service, and Run a Container with a Greeting Message
+###
+
+- name: Install Nginx or httpd & docker with basic commands
+  hosts: all
+  become: yes
+
+  task: 
+    - name: install Nginx
+        yum:
+            name: nginx
+            state: present
+    
+    - name: install docker
+        apt:
+            name: docker
+            state: present
+    
+    - name: Start Docker service
+        service:
+            name: docker
+            state: started
+            enabled: yes
+    
+    - name: Run ubuntu container with echo "hello Pathnex"
+        command: docker run -rm ubuntu:22:04 echo "Hello Pathnex"
+
+---
+    
+
+    
