@@ -1,0 +1,28 @@
+Day-02 || 02-Aug-2026
+
+Class Assignment:
+    - Study the df -h command
+    - Watch the previous Linux video
+    - Evening class - Summarize daily learning 
+
+Self-Assignment:
+    - Completed 1 readings of the Linux Questions PDF
+    - Completed 1 readings of the Linux Commands PDF
+    - Coding practice for 1 hour:
+        - Kubernetes
+        - Docker
+        - Ansible
+        - Shell Scripting - Linux
+
+Feedback received from Neeraj Sir for evening class:
+    - Dont Read content directly from notes and speak 
+    - Only speak on what was thaught today
+
+Next-day-task:
+    - Try to write atleast 500 line code within 30 mins
+    - Read one The-hindu article 
+    - Revise linux concepts and re-read class PDF's regarding linux topics
+    - Improvement required in evening class 
+    - Summarize everthing what ever task you complete to improve memory and communication
+
+

@@ -1,0 +1,262 @@
+################### Linux script - 02-Aug-2026 - Learning #####################
+
+#!/bin/bash
+
+USER_NAME=$USER
+CURRENT_DATE=$(date)
+CURRENT_PATH=$PWD
+FILES=$(ls -C)
+PARENT_PATH=$(cd .. && pwd)
+CREATE_FOLDER=$(mkdir new_folder)
+
+cat << EOF
+########################################
+#                                      #
+#       PATHNex Learning: DAY-02       #
+#                                      #  
+########################################
+
+
+========================================
+========================================
+        SYSTEM INFORMATION
+========================================
+User: $USER_NAME
+Date: $CURRENT_DATE
+Path: $CURRENT_PATH
+
+Current files and folders:
+========================================
+$FILES
+========================================
+
+Change directory:
+========================================
+Current path: $CURRENT_PATH
+Using command 'cd ..' will change directory to:
+$PARENT_PATH
+
+Current script path remains:
+$PWD
+========================================
+
+Create directory:
+========================================
+Using command 'mkdir new_folder' will create a folder in $CURRENT_PATH
+$CREATE_FOLDER
+ls:
+$(ls -C)
+========================================
+
+Remove directory:
+========================================
+Using command 'rm -rf new_folder' will delete the new_folder
+$(rm -rf new_folder)
+ls:
+$(ls -C)
+========================================
+
+Create file:
+========================================
+Using command 'touch new_file.txt' will create new file
+$(touch new_file.txt)
+ls:
+$(ls -C)
+========================================
+
+Adding content to newly created file:
+========================================
+Using command 'echo "hello all, This is new content inserted in file" >> new_file.txt'
+$(echo "hello all, This is new content inserted in file" >> new_file.txt)
+This command will '>>' append the content to file, Using '>' will override the file and not append the content in file
+========================================
+
+Checking content in file:
+========================================
+Using command 'cat new_file.txt' will show content inside the file
+$(cat new_file.txt)
+========================================
+
+Remove file:
+========================================
+Using command 'rm new_file.txt' will delete the new_file.txt
+$(rm new_file.txt)
+ls:
+$(ls -C)
+========================================
+
+EOF
+
+############################# END #############################################
+############################# Ansible #########################################
+
+Ansible - Install & Enable NGINX
+
+- name: Install and start ngnix 
+  host: all
+  become: yes
+
+  tasks:
+    - name: Install ngnix
+      yum:
+        name: ngnix
+        state: present
+
+    - name: Start and enable nginx Services
+      service:
+        name: ngnix
+        state: started
+        enabled: yes
+
+############################# END #############################################
+############################# Terraform - EC2 with tags #######################
+
+provider "aws" {
+    region = "us-east-01"
+}
+
+resource "aws_instance" "PathNexEC2" {
+    ami = "ami-07e5ce642bbc48c0d"
+    instance_type = "r5.2xlarge"
+
+    tags = {
+        Name = "PathNex-server"
+        Environment = "Training-Aug-2026"
+        Owner = "Pathnexstudent_nayan"
+    }
+}
+############################# END #############################################
+############################# Kubernetes ######################################
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: pathnex-deployment
+
+spec:
+    replicas: 2
+
+    selector:
+        matchLabels:
+            app: pathnex-app
+    
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: app
+                  image: nginx
+                  ports:
+                   - containerPort: 80
+
+############################# END #############################################
+############### Shell Script — Disk Usage #####################################
+
+#!/bin/bash
+df -h
+
+############################# END #############################################
+############################# Docker Images & Containers ######################
+
+docker --version
+docker pull ubuntu
+docker images
+docker ps -a
+
+############################# END #############################################
+############################# DockerFile ######################################
+
+FROM ubuntu:22.04
+RUN apt update
+CMD ["echo", "Hello Pathnex"]
+
+############################# END #############################################
+############################# Ansible #########################################
+
+
+
+
+Ansible 
+
+- name: Install Apache & start service
+  host: all
+  become: yes
+
+  tasks:
+    - name: Installed Apache
+      yum:
+        name: httpd 
+        state: present
+    
+    - name: start service
+      serice:
+        state: started
+        enabled: yes
+
+############################# END #############################################
+############################# IAC #############################################
+
+provider "aws" {
+    region = "ap-south-01"
+}
+
+resource "aws_instance" "pathnex-EC2" {
+    ami = "ami-03f419e5dee7ea8f3"
+    instance_type = "t3_medium"
+    tags = {
+        Name: "Pathnex-T3"
+    }
+}
+
+############################# END #############################################
+############################# Kubernetes ######################################
+
+kind: ReplicaSet
+apiVersion: apps/v1
+
+metadata: 
+    name: pathnex-replicaset
+
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-app
+
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+
+        spec:
+            containers:
+                - name: app
+                  image: nginx
+                  ports:
+                    - containerPort: 80
+
+############################# END #############################################
+############### Shell Script — User Info  #####################################
+
+#!/bin/bash
+
+echo "Current user: $(whoami)"
+echo "Current user group: $(groups)"
+
+############################# END #############################################
+############################# Docker ##########################################
+
+FROM nginx:latest
+COPY index.html /usr/share/nginx/html/index.html
+
+#html
+<h1> Hello Pathnex </h1>
+
+#bash
+/usr/share/nginx/html
+
+docker build -t pathnex-nginx .
+docker run -d -p 80:80 pathnex-nginx
+############################# END #############################################
