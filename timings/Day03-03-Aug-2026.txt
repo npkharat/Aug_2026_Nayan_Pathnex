@@ -1,0 +1,24 @@
+Day-03 || 03-Aug-2026
+
+Class Assignment:
+    - Attended 6AM class
+    - Joined Evening class - I think i have improved from last days
+
+Self-Assignment:
+    - Completed 2 readings of the Linux Questions PDF
+    - Completed 2 readings of the Linux Commands PDF
+    - Coding practice for 2 hours from l1 & l2 repository:
+        - Kubernetes
+        - Docker
+        - Ansible
+        - Shell Scripting - Linux
+
+
+Next-day-task:
+    - Try to write atleast 500 line code within 30 mins
+    - Read one The-hindu article 
+    - Revise linux concepts 
+    - Speaking on 10 random topics for 1 min
+    
+
+
