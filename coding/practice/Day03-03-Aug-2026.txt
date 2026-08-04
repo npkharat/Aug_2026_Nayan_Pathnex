@@ -1,0 +1,436 @@
+#L1 - Day 01
+# Day 01 — Basics
+
+##Ansible Task — Install Nginx on Pathnex Server
+---
+- name: Install Nginx on pathnex server
+  host: all
+  become: yes
+
+  tasks:
+    - name: Install Nginx
+      yum: 
+        name: nginx
+        state: present
+
+
+##Terraform Task — Create EC2 (c5.xlarge)
+provider "aws" {
+    region: "ap-south-01"
+}
+
+resource "aws_instance" "PathnexEC2"{
+    ami = "ami-0abcd1234abcd1234"
+    instance_type = "c4.xlarge"
+
+tags = {
+    Name = "Pathnex-EC2"
+}
+}
+
+##Kubernetes Task — Create Nginx Pod
+
+kind: Pod
+apiVersion: v1
+
+metadata:
+    name: pathnex-pod
+
+spec:
+    containers:
+        - name: web
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+
+##Shell Script — Print Date & Hostname
+#!/bin/bash
+echo "Date: $(date)"
+echo "Hostname: $(hostname)"
+
+# Git Integration
+##Jenkins Pipeline — Checkout Git
+
+pipeline {
+    agent any
+    stages{
+        stage('Checkout'){
+            steps{
+                git branch: 'main', url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+
+        stage('list files'){
+            steps{
+                sh 'ls -la'
+            }
+        }
+    }
+}
+
+##GitLab CI — Checkout Git
+
+stages:
+    - checkout
+
+git-checkout:
+    stage: checkout
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd sample-java-app
+        - ls -la
+
+#L1 - Day 02
+# Day 02 — Services & Tags
+
+##Ansible — Install & Enable Nginx
+
+---
+- name:  Install and start Nginx on Pathnex
+  host: all
+  become: yes
+  tasks:
+    - name: Install nginx
+      yum:
+        name: nginx
+        state: present
+    
+    - name: Enable nginx
+      service:
+        name: nginx
+        enabled: yes
+        state: started
+
+##Terraform — EC2 with Tags (r5.2xlarge)
+
+provider "aws" {
+    region = "us-east-1"
+}
+
+resource "aws_instance" "PathnexEC2"{
+    ami = "ami-0abcd1234abcd1234"
+    instance_type = "r5.2xlarge"
+
+    tags = {
+        Name = "Pathnex-server"
+        Environment = "Training"
+        Owner = "PathnextStudentNayan"
+    }
+}
+
+##Kubernetes — Deployment with 2 Replicas
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: pathnex-deployment
+spec:
+    replicas: 2
+    selector:
+        matchLables:
+            app: pathnex-app
+    template:
+        metadata:
+            lables:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: app
+                  image: nginx:latest
+                  ports:
+                    - containerPort: 80
+
+##Shell Script — Disk Usage
+#!/bin/bash
+df -h
+
+# Maven Build
+## Jenkins Pipeline — Maven Build
+
+pipeline {
+    agent: any
+    tools {
+        maven 'Maven-3.8.1'
+        jdk 'JDK-17'
+    }
+
+    stages{
+        stage('Checkout'){
+            steps{
+                git branch: 'main' , url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('Compile'){
+            steps{
+                sh 'mvn clean compile'
+            }
+        }
+        stage('Test'){
+            steps{
+                sh 'mvn test'
+            }
+        }
+        stage('package'){
+            steps{
+                sh 'mvn package'
+            }
+        }
+    }
+}
+
+##GitLab CI — Maven Build
+
+stages:
+    - build
+    - test
+    - package
+
+maven-build:
+    stage: build
+    image: maven:3.8.1-jdk-17
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd sample-java-app
+        - mvn clean compile
+maven-test:
+    stage: test
+    image: maven:3.8.1-jdk-17
+    script:
+        - cd sample-java-app
+        - mvn test
+
+maven-package:
+    stage: package
+    image: maven:3.8.1-jdk-17
+    script:
+        - cd sample-java-app
+        - mvn package
+
+#L1 - Day 03
+# Day 03 — Users, SGs, Env Vars
+
+##Ansible — Create User
+
+---
+- name: Create Pathnex user
+  host: all
+  become: yes
+  tasks:
+    - name: Create user
+      user: 
+        name: pathnex-admin
+        shell: /bin/bash
+
+## Terraform — Security Group (r6i.4xlarge EC2)
+
+provide "aws"{
+    region = "us-east-1"
+}
+resource "aws_security_group" "pathnexSG"{
+    name    = "PathnexSG"
+    description = "pathnex SG for SSH"
+
+    ingress {
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_block  = ["0.0.0.0/0"]
+    }
+}
+
+resource "aws_instance" "pathnexEC2"{
+    ami             = "ami-0abcd1234abcd1234"
+    instance_type   = "r6i.4xlarge"
+    vpc_security_group_ids = [aws_security_group.pathnexSG.id]
+
+    tags = {
+        Name = "Pathnex-EC2"
+    }
+}
+
+## Kubernetes — Add Environment Variables
+
+kind: Pod
+apiVersion: v1
+
+metadata:
+    name: pathnex-env-pod
+
+spec: 
+    containers:
+        app: app
+        image: nginx: latest
+        env:
+          - name: APP_ENV
+            value: "production"
+
+## Shell Script — Check File Exists
+#!/bin/bash
+FILE="/tmp/pathnex.txt"
+
+if [ -f "FILE" ]; then
+    echo "File exist"
+else
+    echo "File doesnt exixts"
+fi
+
+# NodeJS Build
+## Jenkins Pipeline — NodeJS Build
+
+pipeline{
+    agent: any
+    tools{
+        nodejs 'NodeJS-16'
+    }
+
+    stages{
+
+        stage('Git Checkout'){
+            steps{
+                git branch: 'main', url: 'https://github.com/Pathnex/sample-node-app.git'
+            }
+        }
+
+        stage('Install Dependancies'){
+            steps{
+                sh 'npm install'
+            }
+        }
+
+        stage('Run Test'){
+            steps{
+                sh 'npm test'
+            }
+        }
+
+        stage('Build'){
+            steps{
+                sh 'npm run build'
+            }
+        }
+    }
+}
+
+
+## GitLab CI — NodeJS Build
+
+stages:
+    - install
+    - test
+    - build
+
+node-install:
+    stage: install
+    image: node-16
+    scrip:
+        - git clone https://github.com/Pathnex/sample-node-app.git
+        - cd sample-node-app
+        - npm install
+
+node-test:
+    stage: test
+    image: node-16
+    script:
+        - cd sample-node-app
+        - npm test
+
+node-build:
+    stage: build
+    image: node-16
+    script:
+        - cd sample-node-app
+        - npm run build 
+    
+
+#L2 - Day 03
+Day 03 — Ansible, Terraform & Kubernetes Basics
+
+##Ansible — Install Apache and Start Service
+---
+- name: Install and Start Apache
+  host: all
+  become: yes
+  tasks:
+    - name: install Apache
+      yum: 
+        name: httpd
+        state: present
+    
+    - name: start Apache
+      service: 
+        name: httpd
+        enabled: yes
+        state: started
+
+##Terraform — EC2 Instance (t3.medium)
+
+provide "aws" {
+    region  = "us-east-1"
+}
+
+resource "aws_instance" "pathnexEC2"{
+    ami     = "ami-0abcd1234abcd1234"
+    instance_type = "t3.medium"
+    tags = {
+        Name = "Pathnex-EC2"
+    }
+}
+
+##Kubernetes — Create a ReplicaSet with 3 Replicas
+kind: ReplicaSet
+apiVersion: apps/v1
+metadata:
+    name: pathnex-ReplicaSet
+spec:
+    replicas: 3
+
+    selector:
+        matchLabels:
+            app: pathnex-app
+    
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: app
+                  image: nginx
+                  ports:
+                    - containerPort: 80
+
+##Shell Script — User Info
+#!/bin/bash
+echo "Current user: $(whoami)"
+echo "Current user group: $(groups)"
+
+##Docker File for Nginx Web Server
+FROM nginx:latest
+COPY index.html /usr/share/nginx/html/index.html
+
+##HTML
+<h1>Hello Pathnex </h1>
+
+## Real Path
+/usr/share/nginx/html
+
+## bash
+docker build -t pathnex-nginx .
+docker run -d -p 80:80 pathnex-nginx
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
