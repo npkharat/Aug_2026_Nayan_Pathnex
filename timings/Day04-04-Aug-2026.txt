@@ -2,18 +2,23 @@ Day-04 || 04-Aug-2026
 
 Class Assignment:
     - Attended 6AM class
+    - Attended Evening class
+
 
 
 Self-Assignment:
-    - Coding practice for 2 hours from l1 & l2 repository:
+    - Coding practice for 1 hours from l1 & l2 repository:
         - Kubernetes
         - Docker
         - Ansible
         - Shell Scripting - Linux
+    - Read one article
+    - Worked on articulation
+
+    
 
 
-Next-day-task:
-    - 
+
     
 
 
