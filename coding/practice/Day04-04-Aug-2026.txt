@@ -1,0 +1,166 @@
+L1
+# Day 04 — More Packages, Key Pair, Service
+
+## 🔹 Ansible — Install Multiple Packages
+
+---
+- name: Install multiple Packages
+  hosts: all
+  become: yes
+  tasks: 
+    - name: Install tools
+      yum:
+        name:
+            - git
+            - docker
+            - tree
+            - wget
+            - curl
+        state: present
+
+## 🔹 Terraform — EC2 with Key Pair (c6i.8xlarge)
+provider "aws" {
+    region = "us-east-1"
+}
+
+resource "aws_key_pair" "pathnex_key"{
+    key_name = "pathnexkey"
+    pubic_key = "ssh-rsa AAAA...."
+}
+resource "aws_instance" "pathnexEC2"{
+    ami = "ami-0abcd1234abcd1234"
+    instance_type = "c6i.8xlarge"
+    key_name = aws_keypair.pathnex_key.key_name
+    tags = {
+        Name = "pathnex-EC2"
+    }
+}
+
+## 🔹 Kubernetes — Create ClusterIP Service
+kind: Service
+apiVersion: v1
+metadata:
+    name: pathnex-service
+
+spec: 
+    selector: 
+        app: pathnex-app
+    ports:
+        - port: 80
+          targetPort: 80    
+
+
+# Parallel Builds
+## 🔹 Jenkins Pipeline — Parallel Build & Test
+
+pipeline{
+    agent any
+    stages{
+        stage('Parallel task'){
+            parallel{
+                stage('Build'){
+                    steps{
+                        sh 'mvn clean compile'
+                    }
+                }
+                stage('Test){
+                    steps{
+                        sh 'mvn test'
+                    }
+                }
+            }
+        }
+    }
+}
+
+## 🔹 GitLab CI — Parallel Jobs
+stages:
+    - build-test
+
+maven-build:
+    stage: build-test
+    image: maven:3.8.1-jdk-17
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd smaple-java-app
+        - mvn clean compile
+    parallel: 1
+
+maven-test:
+    stage: build-test
+    image: maven:3.8.1-jdk-17
+    scrips:
+        - cd smaple-java-app
+        - mvn test
+    parallel: 1
+
+
+L2 practice
+Day 04 — Basic CI/CD Concepts with Jenkins & GitLab
+
+pipeline{
+    agent any
+    stages{
+        stage('Build){
+            steps{
+                echo "Building project"
+            }
+        }
+        stage('Test'){
+            steps{
+                echo "Testing"
+            }
+        }
+        stage('Deploy'){
+            steps{
+                echo "App deployed"
+            }
+        }
+    }
+}
+
+🔹 GitLab CI/CD — Basic Pipeline
+stages:
+    - build
+    - test
+    - deploy
+
+build:
+    stage: build
+    script:
+        - echo "Building project"
+
+test:
+    stage: test
+    script:
+        - echo "Testing app"
+
+deploy:
+    stage: deploy
+    scrips:
+        - echo "App deployed"
+
+🔹 Ansible — Install and Configure Nginx
+
+---
+  - name: Install ansible & configure nginx
+    hosts: all
+    become: yes
+    tasks:
+        - name: install nginx
+          yum: 
+            name: nginx
+            state: present
+        - name: Configure nginx
+        template:
+            src: nginx.conf.j2
+            dest: /etc/nginx/nginx.conf
+        
+        - name: start nginx
+          service:
+            name: nginx
+            state: started
+            enabled: yes
+
+🔹 Terraform — EC2 with Security Group
+resource "aws_instance" "pathnex_ec2"
