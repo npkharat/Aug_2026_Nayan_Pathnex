@@ -1,0 +1,313 @@
+L1
+# Day 04 — More Packages, Key Pair, Service
+
+## 🔹 Ansible — Install Multiple Packages
+
+---
+- name: Install multiple Packages
+  hosts: all
+  become: yes
+  tasks: 
+    - name: Install tools
+      yum:
+        name:
+            - git
+            - docker
+            - tree
+            - wget
+            - curl
+        state: present
+
+## 🔹 Terraform — EC2 with Key Pair (c6i.8xlarge)
+provider "aws" {
+    region = "us-east-1"
+}
+
+resource "aws_key_pair" "pathnex_key"{
+    key_name = "pathnexkey"
+    pubic_key = "ssh-rsa AAAA...."
+}
+resource "aws_instance" "pathnexEC2"{
+    ami = "ami-0abcd1234abcd1234"
+    instance_type = "c6i.8xlarge"
+    key_name = aws_keypair.pathnex_key.key_name
+    tags = {
+        Name = "pathnex-EC2"
+    }
+}
+
+## 🔹 Kubernetes — Create ClusterIP Service
+kind: Service
+apiVersion: v1
+metadata:
+    name: pathnex-service
+
+spec: 
+    selector: 
+        app: pathnex-app
+    ports:
+        - port: 80
+          targetPort: 80    
+
+
+# Parallel Builds
+## 🔹 Jenkins Pipeline — Parallel Build & Test
+
+pipeline{
+    agent any
+    stages{
+        stage('Parallel task'){
+            parallel{
+                stage('Build'){
+                    steps{
+                        sh 'mvn clean compile'
+                    }
+                }
+                stage('Test){
+                    steps{
+                        sh 'mvn test'
+                    }
+                }
+            }
+        }
+    }
+}
+
+## 🔹 GitLab CI — Parallel Jobs
+stages:
+    - build-test
+
+maven-build:
+    stage: build-test
+    image: maven:3.8.1-jdk-17
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd smaple-java-app
+        - mvn clean compile
+    parallel: 1
+
+maven-test:
+    stage: build-test
+    image: maven:3.8.1-jdk-17
+    scrips:
+        - cd smaple-java-app
+        - mvn test
+    parallel: 1
+
+
+L2 practice
+Day 04 — Basic CI/CD Concepts with Jenkins & GitLab
+
+pipeline{
+    agent any
+    stages{
+        stage('Build){
+            steps{
+                echo "Building project"
+            }
+        }
+        stage('Test'){
+            steps{
+                echo "Testing"
+            }
+        }
+        stage('Deploy'){
+            steps{
+                echo "App deployed"
+            }
+        }
+    }
+}
+
+🔹 GitLab CI/CD — Basic Pipeline
+stages:
+    - build
+    - test
+    - deploy
+
+build:
+    stage: build
+    script:
+        - echo "Building project"
+
+test:
+    stage: test
+    script:
+        - echo "Testing app"
+
+deploy:
+    stage: deploy
+    scrips:
+        - echo "App deployed"
+
+🔹 Ansible — Install and Configure Nginx
+
+---
+  - name: Install ansible & configure nginx
+    hosts: all
+    become: yes
+    tasks:
+        - name: install nginx
+          yum: 
+            name: nginx
+            state: present
+        - name: Configure nginx
+        template:
+            src: nginx.conf.j2
+            dest: /etc/nginx/nginx.conf
+        
+        - name: start nginx
+          service:
+            name: nginx
+            state: started
+            enabled: yes
+
+🔹 Terraform — EC2 with Security Group
+resource "aws_security" "example"{
+    name = "example_security_group"
+    description = "Allow ssh & http"
+
+    ingress{
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_block  = ["0.0.0.0/0"]
+    }
+
+    ingress{
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_block  = ["0.0.0.0/0"]
+    }
+
+    egress{
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_block  = ["0.0.0.0/0"]
+    }
+}
+
+Docker
+# Apache Container
+FROM ubuntu:22.04
+RUN apt update && apt install apache2 -y
+RUN echo "Hello Pathnex" > /var/www/html/index.html
+CMD ["apachectl", "-D", "FOREGROUND"]
+
+
+# Bash Real Path
+
+/var/ww/html
+
+# Day 05 — Advanced CI/CD and Infrastructure Provisioning
+## 🔹 Jenkinsfile — With Git Integration and Testing
+
+pipeline{
+    agent any
+    stages{
+        stage('Clone Repository'){
+            steps{
+                git branch: 'main', url: "https://github.com/pathnex/sample-repo.git"
+            }
+        }
+        stage('Build'){
+            steps{
+                echo "Building project from git repo"
+            }
+        }
+
+        stage('Test'){
+            steps{
+                echo "Running unit tests"
+            }
+        }
+
+        stage('Deploy'){
+            steps{
+                echo "Deployed application after Testing"
+            }
+        }
+    }
+}
+
+🔹 GitLab CI/CD — With Docker Build
+stages:
+    - build
+    - test
+    - push
+    - deploy
+
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-app .
+test:
+    stage: test
+    script:
+        - trivy ----trivy image \
+          --format template \
+          --template "@contrib/html.tpl" \
+          -o report.html \
+          pathnex-app
+push:
+    stage: push
+    script: 
+        - docker push pathex-app
+
+deploy: 
+    stage: deploy
+    script:
+        - kubectl apply -f kubernetes/deployment.yaml
+
+
+🔹 Ansible — Create User and Set Permissions
+---
+ - name: Create User & set permission
+   hosts: all
+   become: yes
+   tasks:
+    - name: Create User
+      user:
+        name: pathnex
+        state: present
+        shell: /bin/bash
+
+    - name: Set Permissions for the user
+      file:
+        path: /home/pathnex
+        owner: pathnex
+        group: pathnex
+        mode: '0755'
+
+## Terraform — EC2 with Tags and Volume
+
+resource "aws_instance" "PathnexEC2"{
+    ami = "ami-0abcd1234abcd1234"
+    instance_type = "t2/medium"
+
+    tags = {
+        Name = "Pathnex-server"
+    }
+
+    ebs_block_device{
+        device_name = "/dev/sdh"
+        volume_size = 50
+    }
+}
+
+#Docker
+
+print("Hello Pathnex")
+
+# Docker File
+FROM python:3.11
+WORKDIR  /opt/pathnex/python-app
+COPY app.py /opt/pathnex/python-app
+CMD ["python", "/opt/pathnex/python-app/app.py"]
+
+#Real path
+/opt/pathnex/python-app
+    
+        
