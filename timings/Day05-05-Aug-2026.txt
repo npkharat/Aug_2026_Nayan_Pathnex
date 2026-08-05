@@ -1,14 +1,19 @@
 Day-05 || 05-Aug-2026
 
 Class Assignment:
-    - Watched you tube video GitHub to EC2 in 20 Minutes | The Easiest Setup Ever
-    - Created Git setup as instructed in the you tube video
-    - Revised IP address and subnet concepts 
-    - Taken overview about the modules discussed in morning
-    - Prepare 2 min 30 sec presentation on todays task
+    - Attended 6AM class
+    - Attended the mentor session at 6 PM. It was helpful, motivating.
+    - Attended Evening class
+    - Revision on todays topics
 
-Self Assignment:
-    - Ansible coding practice done
+
+Self-Assignment:
+    - Coding practice for 1 hours from l1 & l2 repository:
+        - Kubernetes
+        - Docker
+        - Ansible
+        - Shell Scripting - Linux
+
 
 
 
