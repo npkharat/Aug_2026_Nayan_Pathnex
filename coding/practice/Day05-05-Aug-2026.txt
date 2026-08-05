@@ -36,3 +36,5 @@ resource "aws_instance" "PathnexEC2"{
     }
 }
 
+## Kubernetes — Resource Limits
+
