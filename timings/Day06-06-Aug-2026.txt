@@ -2,11 +2,13 @@ Day-06 || 06-Aug-2026
 
 Class Assignment:
     - Morning class at 6:00 AM : Attended
-    - 
+    - Evening class Attended
+    
 
 
 Self Assignment:
     - Coding practice done (1hour)
+    - Git basic done
 
 
 
