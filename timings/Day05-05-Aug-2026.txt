@@ -1,0 +1,19 @@
+Day-05 || 05-Aug-2026
+
+Class Assignment:
+    - Attended 6AM class
+    - Attended the mentor session at 6 PM. It was helpful, motivating.
+    - Attended Evening class
+    - Revision on todays topics
+
+
+Self-Assignment:
+    - Coding practice for 1 hours from l1 & l2 repository:
+        - Kubernetes
+        - Docker
+        - Ansible
+        - Shell Scripting - Linux
+
+
+
+
