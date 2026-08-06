@@ -200,3 +200,88 @@ deploy:
     image: alpine: latest
     script:
         - echo "Deploying to $ENVIRONMENT by $INSTITUTE_NAME"
+
+
+L2 - # Day 06 — Introduction to CloudFormation and Kubernetes Advanced Concepts
+
+## Ansible — Install Docker
+---
+ - name: Install Docker
+   hosts: all
+   become: yes
+   tasks:
+    - name: install Docker
+      yum:
+        name: Docker
+        state: present
+    - name: start Docker
+      service:
+        name: docker
+        enabled: yes
+        state: started
+
+##Terraform — Provisioning EC2 with VPC
+resource "awc_vpc" ""main{
+    cidr_block = "10.0.0.0/16"
+
+    tags = {
+        Name = "main-vpc"
+    }
+}
+
+resource "aws_instance" "pathnex_ec2"{
+    vpc = "aws_subent.main-id"
+
+    ami = "ami-xyx"
+    instance_type = "t3.medium"
+    tags = {
+        Name = "Pathnex-EC2"
+    }
+}
+
+##Kubernetes — Pod with Volume Mount
+apiVersion: v1
+kind: Pod
+metadata:
+    name: pathnex-Pod
+spec:
+    containers:
+        - name: web
+          image: nginx
+          volumeMount:
+            - mountPath: /usr/share/nginx/html
+              name: html-volume
+    volumes:
+        - name: html-volume
+          hostPath:
+            path: /data
+            type: directory
+    
+    
+##Shell Script — Check for Running Services
+#!/bin/bash
+
+services=("nginx" "docker" "httpd")
+for service in "{services[@]}"
+do 
+    if systemctl is-active --quite $service;
+    then
+        echo "$service is running"
+    else
+        echi "$service is stoped"
+    fi
+done
+
+##docker
+# Node.js Application (JavaScript)
+console.log("Hello pathnex")
+
+# Docker File
+FROM node:18
+WORKDIR /opt/pathnex/note-app
+COPY app.js /opt/pathnex.node-app/
+CMD ["node", "/opt/pathnex/node-app/app.js"]
+
+##real path
+/opt/pathnex/node=app
+

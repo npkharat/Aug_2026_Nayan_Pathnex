@@ -6,6 +6,7 @@ Class Assignment:
 
 
 Self Assignment:
+    - Coding practice done (1hour)
 
 
 
