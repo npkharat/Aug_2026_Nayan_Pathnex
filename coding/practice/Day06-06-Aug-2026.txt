@@ -1,0 +1,287 @@
+L1 - Day 6
+# Day 06 — DEBUG DAY
+
+##Ansible (broken)
+---
+- name: Install nginx
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install nginx
+      yum:
+        name: nginx
+        state: present
+
+## Terraform (broken)
+
+resource "aws_instance" "Broken"{
+    ami = "ami-0xyz"
+    instance_type = t2.micro
+
+    tags = {
+        Name = "Broken"
+    }
+}
+
+##Kubernetes (broken)
+apiVersion: v1
+kind: Pod
+metadata:
+    name: pathnex
+spec:
+    containers:
+        - name: app
+          image: nginx
+
+
+#  Debugging Pipelines
+## Jenkins Pipeline — Debugging
+
+pipeline{
+    agent any
+    stages{
+        stage('Checkout'){
+            steps{
+                git branch: 'main', url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+
+        stage('Build'){
+            steps{
+                sh '''
+
+                mvn clean compile || {echo "compiled failed"; exit 1;}
+
+                '''
+            }
+        }
+        stage('Test'){
+            steps{
+                sh''' 
+                mvn test || {echo "Test failed, pipeline failed in test phase"; exit 1;}
+                '''
+            }
+        }
+    }
+}
+
+
+## 🔹 GitLab CI — Debugging
+stages:
+    - build
+    - test
+build: 
+    stage: build
+    image: maven: 3.8.1-jdk-17
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd sample-java-app
+        - mvn clean compile || {echo "Build failed"; exit 1; }
+test:
+    stage: test
+    image: maven: 3.8.1-jdk-17
+    script:
+        - stage: test
+          cd sample-java-app
+          scrips:
+            - mvn test || {echo "Test failed"; exit 1;}
+
+===============================================
+
+L1 - Day 7 challange
+Rewrite ALL FOUR from scratch:
+
+1. Ansible: Install nginx
+2. Terraform: EC2 (choose any Pathnex instance)
+3. Kubernetes: Deployment 2 replicas
+4. Shell: Print date + uptime
+
+Set a timer: **20 minutes**
+===============================================
+1. Ansible: Install nginx
+
+---
+ - name: Install Ansible
+   hosts: all
+   become: yes
+   tasks:
+    - name: Install nginx
+      yum:
+        name: nginx
+        state: present
+
+
+2. Terraform: EC2 (choose any Pathnex instance)
+provider "aws"{
+    region = "ap-south-1"
+}
+
+resource "aws_instance" "PathnexEC2"{
+    ami = "ami-xyx"
+    instance_type = "t2.micro"
+    key_name = "pathnex-key"
+
+    tags = {
+        Name = "pathnex-EC2",
+        Project = "pathnex-Project",
+        Owner = "pathnex-nayan"
+        Environment = "dev"
+    }
+}
+
+3. Kubernetes: Deployment 2 replicas
+kind: Deployment
+apiVersion: v1
+metadata:
+    name: pathnex-Deployment
+
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-app
+    template:
+        metadata:
+            label:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: pathnex-app
+                  image: nginx
+                  ports:
+                    - containerPort: 80
+
+4. Shell: Print date + uptime
+
+#!/bin/bash
+echo "Date, $(date)"
+echo "Uptime, $(uptime -p)"
+
+>>>>Task completed within 11 mins 52 seconds - Succesfull<<<<
+
+
+# Parameterized Builds
+## Jenkins Pipeline — Parameterized
+
+pipeline{
+    agent any
+    parameters{
+        string( name: 'ENVIRONMENT', defaultValue: 'dev', description: 'Deployment Environment' )
+    }
+    environment{
+        INSTITUTE_NAME = "Pathnex"
+    }
+
+   stages{
+        stage('Checkout'){
+            steps{
+                git branch: 'main', url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('Deploy'){
+            steps{
+                sh'''
+                echo "Deploying to $ENVIRONMENT by $INSTITUTE_NAME"
+                '''
+            }
+        }
+   }
+}
+##GitLab CI — Parameterized via Variables
+
+stages:
+    - deploy
+variables:
+    INSTITUTE_NAME: 'Pathnex'
+    ENVIRONMENT: 'dev'
+
+deploy:
+    stage: deploy
+    image: alpine: latest
+    script:
+        - echo "Deploying to $ENVIRONMENT by $INSTITUTE_NAME"
+
+
+L2 - # Day 06 — Introduction to CloudFormation and Kubernetes Advanced Concepts
+
+## Ansible — Install Docker
+---
+ - name: Install Docker
+   hosts: all
+   become: yes
+   tasks:
+    - name: install Docker
+      yum:
+        name: Docker
+        state: present
+    - name: start Docker
+      service:
+        name: docker
+        enabled: yes
+        state: started
+
+##Terraform — Provisioning EC2 with VPC
+resource "awc_vpc" ""main{
+    cidr_block = "10.0.0.0/16"
+
+    tags = {
+        Name = "main-vpc"
+    }
+}
+
+resource "aws_instance" "pathnex_ec2"{
+    vpc = "aws_subent.main-id"
+
+    ami = "ami-xyx"
+    instance_type = "t3.medium"
+    tags = {
+        Name = "Pathnex-EC2"
+    }
+}
+
+##Kubernetes — Pod with Volume Mount
+apiVersion: v1
+kind: Pod
+metadata:
+    name: pathnex-Pod
+spec:
+    containers:
+        - name: web
+          image: nginx
+          volumeMount:
+            - mountPath: /usr/share/nginx/html
+              name: html-volume
+    volumes:
+        - name: html-volume
+          hostPath:
+            path: /data
+            type: directory
+    
+    
+##Shell Script — Check for Running Services
+#!/bin/bash
+
+services=("nginx" "docker" "httpd")
+for service in "{services[@]}"
+do 
+    if systemctl is-active --quite $service;
+    then
+        echo "$service is running"
+    else
+        echi "$service is stoped"
+    fi
+done
+
+##docker
+# Node.js Application (JavaScript)
+console.log("Hello pathnex")
+
+# Docker File
+FROM node:18
+WORKDIR /opt/pathnex/note-app
+COPY app.js /opt/pathnex.node-app/
+CMD ["node", "/opt/pathnex/node-app/app.js"]
+
+##real path
+/opt/pathnex/node=app
+
