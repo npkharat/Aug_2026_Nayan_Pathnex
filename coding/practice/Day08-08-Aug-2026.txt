@@ -1,0 +1,785 @@
+#Week 1 completed | re-writing all the week task
+
+#L1
+===========================
+# Day 01 — Basics
+===========================
+
+## Ansible Task — Install Nginx on Pathnex Server
+- name: Install nginx
+  hosts: all
+  become: true
+  tasks:
+    - name: Install nginx
+      yum: 
+        name: nginx
+        state: present
+
+##Terraform Task — Create EC2 (c5.xlarge)
+provider "aws"{
+    region = "us-east-1"
+}
+resource "aws_instance" "pathnexEC2"{
+    ami = "ami-abc"
+    instance_type = "c5.xlarge"
+    
+    tags = {
+        Name = "pathnex-ec2-server"
+    }
+}
+
+##Kubernetes Task — Create Nginx Pod
+
+kind: Pod
+apiVersion: v1
+metadata:
+    name: pathnex-Pod
+spec:
+    containers:
+        - name: web
+          image: nginx
+          ports:
+            - containerPort: 80
+
+##Shell Script — Print Date & Hostname
+#!/bin/bash
+echo "Date : $(data)"
+echo "Hostname: $(hostname)"
+
+##Jenkins Pipeline — Checkout Git
+pipeline{
+    agent any
+    stages{
+        stage('Checkout'){
+            steps{
+                git branch: 'main', url: 'git_path.git'
+            }
+        }
+        stage('List files'){
+            steps{
+                sh '''
+                ls -la
+                '''
+            }
+        }
+    }
+}
+
+##GitLab CI — Checkout Git
+stages:
+    - checkout
+
+git-checkout:
+    stage: checkout
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd sample-java-app
+        - ls -la
+
+===========================
+# Day 02 — Services & Tags
+===========================
+##Ansible — Install & Enable Nginx
+
+- name: install nginx
+  hosts: all
+  become: yes
+  tasks:
+    - name: install nginx
+      yum:
+        name: nginx
+        state: present
+    - name: enable nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+##Terraform — EC2 with Tags (r5.2xlarge)
+
+provider "aws" {
+    region = "ap-south-1"
+}
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-123"
+    instance_type = "r5.2xlarge"
+
+    tags = {
+        Name = "pathnex-server"
+        Owner = "nayan"
+        Environment = "training"
+    }
+}
+
+##Kubernetes — Deployment with 2 Replicas
+kind: Deployment
+apiVersion: v1
+metadata:
+    name: pathnex-deployemnt
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: pathnex-app
+                  image: nginx
+                  ports:
+                    - containerPort: 80
+
+## Shell Script — Disk Usage
+#!/bin/bash
+df -h
+
+## Jenkins Pipeline — Maven Build
+
+pipeline{
+    agent any
+    tools {
+        maven 'Maven-3.8.1'
+        jdk 'JDK-17'
+    }
+    stages{
+        stage('Checkout'){
+            steps{
+                git branch: 'main', url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('compile'){
+            steps{
+                sh'''
+                mvn clean compile
+                '''
+            }
+        }
+        stage('test'){
+            steps{
+                sh'''
+                mvn test
+                '''
+            }
+        }
+        stage('package'){
+            steps{
+                sh'''
+                mvn package
+                '''
+            }
+        }
+
+    }
+}
+
+## GitLab CI — Maven Build
+stages:
+    - build
+    - test
+    - package
+
+maven-build:
+    stage: build
+    image: maven:3.8.1-jdk-17
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - mvn clean compile
+maven-test:
+    stage: test
+    image: maven:3.8.1-jdk-17
+    script:
+        - cd sample-java-app
+        - mvn test
+maven-package:
+    stage: package
+    image: maven:3.8.1-jdk-17
+    script:
+        - cd sample-java-app
+        - mvn package
+
+===========================
+# Day 03 — Users, SGs, Env Vars
+===========================
+
+## Ansible — Create User
+
+- name: create Pathnex User
+  hosts: all
+  become: yes
+  tasks: 
+    - name: create pathnex User
+      user:
+        name: pathnex
+        state: present
+        shell: /bin/bash
+
+##Terraform — Security Group (r6i.4xlarge EC2)
+provider "aws"{
+    region = "ap-south-1"
+}
+
+resource "aws_security_group" "pathnex_sg"{
+    name = "pathnex-sg"
+    description = "enable ssh"
+
+    ingress{
+        from_port = 22
+        to_port = 22
+        protocol = 'tcp'
+        cidr = ["0.0.0.0/0"] 
+    }
+}
+
+resource "aws_instance" "pathnex-ec2"{
+    ami = "ami-12345"
+    instance_type = "r6i.4xlarge"
+    vpc_security_group_ids = [aws_security_group.pathnex_sg.id]
+
+    tags = {
+        name = "pathnex-ec2"
+    }
+}
+
+## Kubernetes — Add Environment Variables
+
+kind: Pod
+apiVersion: v1
+metadata:
+    name: pathnex-pod
+spec:
+    containers:
+        - name: pathnex-pod
+          image: nginx
+          ports:
+            - countainerPort: 80
+          env:
+            - name: APP_ENV
+              value: "production"
+
+##Shell Script — Check File Exists
+#!/bin/bash
+
+FILE="/tmp/script.sh"
+
+
+if [ -f "$FILE" ]; then
+    echo "File exist"
+else
+    echo "File doesnt exists"
+fi
+
+##Jenkins Pipeline — NodeJS Build
+pipeline{
+    agent any
+    tools {
+        nodejs 'NodeJS-16'
+    }
+
+    scripts{
+        script('checkout'){
+            steps{
+                git branch: 'main' ; url: 'https://github.com/Pathnex/sample-node-app.git'
+            }
+        }
+        script('Install Dependancies'){
+            steps{
+                sh'''
+                npm install
+                '''
+            }
+        }
+        script('test'){
+            steps{
+                sh'''
+                npm test
+                '''
+            }
+        }
+        script('build'){
+            steps{
+                sh 'npm run build'
+            }
+        }
+    }
+}
+
+## GitLab CI — NodeJS Build
+
+stages:
+    - install
+    - test
+    - build
+
+nodejs-build:
+    stage: build
+    image: node:16
+    script:
+        - git clone https://github.com/Pathnex/sample-node-app.git
+        - cd sample-node-app
+        - npm install
+
+nodejs-test:
+    stage: test
+    image: node:16
+    script:
+        - cd sample-node-app
+        - npm test
+
+nodejs-build:
+    stage: build
+    image: node:16
+    script:
+        - cd smaple-node-app
+        - npm run build
+
+===========================
+# Day 04 — More Packages, Key Pair, Service
+===========================
+
+##Ansible — Install Multiple Packages
+- name: install multiple Packages
+  hosts: all
+  become: yes
+  tasks:
+    - name: install packages
+      yum:
+        name:
+            - nginx
+            - tree
+            - httd
+            - wget
+            - curl
+            - git
+            - Jenkins
+            - python
+        state: present
+
+##Terraform — EC2 with Key Pair (c6i.8xlarge)
+provide "aws"{
+    region = "ap-south-1"
+}
+
+resource "aws_key_pair" "pathnex_key"{
+    key_name = "pathnex-key"
+    public_key = "ssh-rsa AAAA."
+}
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-123"
+    instance_type = "c6i.8xlarge"
+    key_name = aws_key_pair.pathnex_key_name
+
+    tags = {
+        name: "pathnex-ec2"
+    } 
+}
+
+## Kubernetes — Create ClusterIP Service
+kind: Service
+apiVersion: v1
+metadata:
+    name: pathnex-service
+spec:
+    selector:
+        app: pathnex-app
+    ports:
+        - port: 80
+          targetPort: 80
+
+##Jenkins Pipeline — Parallel Build & Test
+pipeline{
+    agent any
+    tools {
+        mavan 'Maven-3.8.1'
+        jdk "JDK-17"
+    }
+    stages{
+        stage('checkout'){
+            steps{
+                git branch: 'main', url:
+                }
+            }
+        stage('parallel tasks){
+
+            parallel {
+
+                stage('compile'){
+                    steps{
+                        sh'''
+                        mvn clean compile
+                        '''
+                    }
+                }
+                stage('test'){
+                    steps{
+                        sh'''
+                        mvn test
+                        '''
+                    }
+                }
+            }
+        }
+    }
+}
+
+## GitLab CI — Parallel Jobs
+
+stages:
+    - build-test
+
+maven-build:
+    stage: build-test
+    image: maven:3.8.1-jdk-17
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd smaple-java-app
+        - mvn clean compile
+    parallel: 1
+
+maven-test:
+    stage: build-test
+    image: maven:3.8.1-jdk-17
+    script:
+        - cd smaple-jave-app
+        - mvn test
+    parallel: 1
+
+===========================
+# Day 05 — Handlers, User-Data, Resource Limits
+===========================
+
+##Ansible — Handler to Restart Nginx
+- name: manage nginx
+  hosts: all
+  become: yes
+  tasks:
+    - name: udpate ngnix file
+      copy:
+        src: index.html
+        dest: /usr/share/nginx/html/index.html
+      notify: Restart Nginx
+
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
+
+##Terraform — EC2 with User Data (c6a.12xlarge)
+
+provide "aws" {
+    region = "ap-south-1"
+}
+
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-123"
+    instance_type = "c6a.12xlarge"
+
+    user_data = <<EOF
+    #!/bin/bash
+    yup install -y httpd
+    systemctl start httpd
+    systemctl enable httpd
+    EOF
+
+    tags = {
+        name = "pathnex-ec2"
+    }
+}
+
+## Kubernetes — Resource Limits
+kind: Pod
+apiVersion: v1
+metadata:
+    name: pathnex-pod
+spec:
+    containers:
+        - name: app
+          image: nginx
+          resources:
+            limits:
+                memory: "250Mi"
+                cpu: "500m" 
+
+          ports:
+            - containerPort: 80
+
+
+##Jenkins Pipeline — Use Environment Variables
+pipeline{
+    agent any
+    enviroment {INSTITUTE_NAME = "Pathnex"}
+    tools {
+        maven 'Maven-3.8.1'
+        jdk 'JDK-17'
+    }
+    stages{
+        stage('print'){
+            steps{
+                sh'''
+                echo "Welcome to $INSTITUTE_NAME devops training"
+                '''
+            }
+        }
+        stage('build'){
+            steps{
+                sh'''
+                mvn clean package -Dinstitute_name=$INSTITUTE_NAME
+                '''
+            }
+        }
+    }
+}
+
+## GitLab CI — Use Environment Variables
+
+stages:
+    - build
+variables:
+    INSTITUTE_NAME: "Pathnex"
+build:
+    stage: build
+    image: maven-3.8.1-jdk-17
+    script:
+        - git clone  https://github.com/Pathnex/sample-java-app.git
+        - cd sample-git-app
+        - echo "Welcome to $INSTITUTE_NAME devops training"
+        - mvn clean package -Dinstitute_name=$INSTITUTE_NAME
+
+
+===========================
+# Day 06 — DEBUG DAY - Fix these broken files:
+===========================
+
+## Ansible (broken)
+
+- name Install nginx
+ hosts all
+ become yes
+ tasks:
+  -name: Install nginx
+  yum:
+    name nginx
+    state present
+
+fixed version
+
+- name: install nginx
+  hosts: all
+  become: yes
+  tasks:
+    - name: install nginx
+      yum: 
+        name: nginx
+        state: present
+        enabled: yes
+
+##Terraform (broken)
+
+resource "aws_instance" "BrokenEC2" {
+  ami = "ami-0xyz"
+  instance_type = t2.micro
+tags {
+ Name = "Broken"
+}
+}
+
+fixed version 
+
+resource "aws_instance" "pathnex_EC2" {
+  ami = "ami-0xyz"
+  instance_type = t2.micro
+  tags {
+    Name = "pathnex-ec2"
+    }
+}
+
+## 🔹 Kubernetes (broken)
+
+apiVersion v1
+kind Pod
+metadata:
+ name pathnex
+spec
+ containers:
+   - name app
+     image nginx
+
+fixed version
+
+apiVersion: v1
+kind: Pod
+metadata:
+    name: pathenx-pod
+spec:
+    containers:
+        - name: app
+          image: nginx
+          ports:
+            - containerPort: 80
+
+## 🔹 Jenkins Pipeline — Debugging
+
+pipeline{
+    agent any
+    tools {
+        maven 'Maven-3.8.1'
+        jdk 'JDK-17'
+    }
+    stages{
+        stage('checkout'){
+            steps{
+                git branch: 'main', url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('build'){
+            steps{
+                sh'''
+                cd sample-java-app
+                mvn clean compile || {echo "Compile failed"; exit 1;}
+                '''
+            }
+        }
+        stage('test'){
+            steps{
+                sh'''
+                mvn test || {echo "Test failed"; exit 1;}
+                '''
+            }
+        }
+    }
+}
+
+##GitLab CI — Debugging
+
+stages:
+    - build
+    - test
+build: 
+    stage: build
+    image: maven-3.8.1-jdk-17
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd sample-java-app
+        - mvn clean compile || {echo "compile failed"; exit 1;}
+test:
+    stage: test
+    image: maven-3.8.1-jdk-17
+    script:
+        - cd sample-java-app
+        - mvn test || {echo "Test failed"; exit 1;}
+
+
+
+===========================
+# Day 07 — SPEED TYPING
+===========================
+Rewrite ALL FOUR from scratch:
+
+1. Ansible: Install nginx
+2. Terraform: EC2 (choose any Pathnex instance)
+3. Kubernetes: Deployment 2 replicas
+4. Shell: Print date + uptime
+
+Set a timer: **20 minutes**
+
+- name: install nginx
+  hosts: all
+  become: yes
+  tasks:
+    - name: install nginx
+      yum:
+        name: nginx
+        state: present
+
+provider "aws"{
+    region = "ap-south-1"
+}
+resource "aws_instance" "pathnex-ec2"{
+    ami = "ami-123"
+    instance_type = "t3.medium"
+    tags = {
+        name = "pathnex-ec2"
+    }
+}
+
+kind: Deployment
+apiVersion: v1
+metadata: 
+    name: pathnex-deployemnt
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: pathnex-app
+                  image: nginx
+                  ports:
+                    - containerPort: 80
+
+#!/bin/bash
+echo "Date: $(date)"
+echo "Uptime: $(uptime)"
+
+completed the task in 4 mins : 48 seconds 
+
+
+## Jenkins Pipeline — Parameterized
+pipeline {
+    agent any
+    parameter {
+        string(name: 'ENVIRONMENT', defaultValue: 'dev', description: 'Deployment Env')
+    }
+    enviroment{
+        INSTITUTE_NAME = "Pathnex"
+    }
+
+    stages{
+        stage('chekcout'){
+            steps{
+                git url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('Deploy'){
+            steps{
+                sh'''
+                echo "Deployment to $ENVIRONMENT by institute $INSTITUTE_NAME"
+            }
+        }
+    }
+}
+
+
+## GitLab CI — Parameterized via Variables
+stages:
+    - deploy
+
+variables:
+    INSTITUTE_NAME: "Pathnex"
+    ENVIRONMENT: "dev"
+
+deploy:
+    stage: deploy
+    image: alpine:latest
+    script:
+        - echo "Deploying to $ENVIRONMENT by $INSTITUTE_NAME"
+
+
+
+
+    
+
+
+
+
+
+
+
