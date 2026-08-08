@@ -4,8 +4,8 @@ Class Assignment:
     - Morning class: Attended (Was late by 15 mins)
     - coding practice: done
     - like_comment: done
-    - Evening class: pendings
-    - Self intro: pending
+    - Evening class: done
+    - Self intro: done
 
 Self Assignment:
     - revised aws service from todays class
@@ -15,7 +15,7 @@ Self Assignment:
 Next day Assignment:
     - Watch previous months(july) 1 week video and cover all the topic covered in this week
     - Write complete L2 , whole weeks code
-    - Revise this weeks topics
+    - Revise this weeks topics - Linux, git, aws
 
 
 
