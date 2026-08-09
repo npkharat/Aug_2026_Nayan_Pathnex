@@ -1,4 +1,4 @@
-L1 - complete week coding
+L2 - complete week coding
 
 ##################
 # Day 01 — Basics
