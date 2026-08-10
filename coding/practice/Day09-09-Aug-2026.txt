@@ -1,0 +1,595 @@
+L2 - complete week coding
+
+##################
+# Day 01 — Basics
+##################
+
+##Ansible Task — Install Nginx on Pathnex Server
+
+- name: install nginx
+  hosts: all
+  become: yes
+  tasks:
+    - name: install nginx
+      yum:
+        name: nginx
+        state: present
+
+# Docker Installation & First Container
+docker --version
+docker run ubuntu echo "Hello pathnex"
+
+# Docker File
+FROM ubuntu:22.04
+CMD["echo", "Hello Pathnex"]
+
+##################
+Day 02 — Services & Tags
+##################
+
+Ansible — Install & Enable Nginx
+- name: install & enable nginx
+  hosts: all
+  become: yes
+  tasks:
+    - name: install nginx
+      yum:
+        name: nginx
+        state: present
+    
+    - name: enable nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+Terraform — EC2 with Tags (r5.2xlarge)
+provider "aws" {
+    region = "ap-south-1"
+}
+
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-123"
+    instance_type = "r5.2xlarge"
+
+    tags = {
+        name = "pathnex-ec2"
+        environment = "dev"
+        owner = "nayan"
+    }
+}
+
+# Kubernetes — Deployment with 2 Replicas
+kind: Deployment
+apiVersion: v1
+metadata: 
+    name: pathnex-deployment
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: pathnex-app
+                  image: nginx
+                  ports:
+                    - containerPort: 80
+
+#Shell Script — Disk Usage
+#!/bin/bash
+echo "Disk usage"
+df -h
+
+# Docker Images & Containers
+docker pull ubuntu
+docker Images
+docker ps -a
+
+FROM ubuntu:22.04
+RUN apt update
+CMD ["echo", "Hello pathnex"]
+
+##################################
+Day 03 — Ansible, Terraform & Kubernetes Basics
+##################################
+
+Ansible — Install Apache and Start Service
+- name: install httpd & start it 
+  hosts: all
+  become: yes
+  tasks:
+    - name: install Apache
+      yup:
+        name: httpd
+        state: present
+    - name: enable Apache
+      service: 
+        name: httpd
+        state: started
+        enabled: yes
+
+#Terraform — EC2 Instance (t3.medium)
+provider "aws"{
+    region = "ap-south-1"
+}
+
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-123"
+    instance_type = "t3.medium"
+
+    tags = {
+        name = "pathnex-ec2"
+        owner = "nayan"
+        environment = "dev"
+    }
+}
+
+#Kubernetes — Create a ReplicaSet with 3 Replicas
+
+kind: ReplicaSet
+apiVersion: v1
+metadata:
+    name: pathnex-replicaset 
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+            app: pathnex-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: pathnex-app
+                  image: nginx
+                  ports:
+                    - containerPort: 80
+
+## Shell Script — User Info
+#!/bin/bash
+echo "Current user: $(whoami)"
+echo "Current user groups: $(groups)"
+
+# Docker File for Nginx Web Server
+FROM nginx:latest
+COPY index.html /usr/share/nginx/html/index.html
+
+#html
+<h1>Hello Pathnex</h1>
+
+# Real Path
+/usr/share/nginx/html
+
+# Bash-docker
+docker build -t pathnex-nginx .
+docker run -d -p 80:80 pathnex-nginx
+
+###################################
+Day 04 — Basic CI/CD Concepts with Jenkins & GitLab
+###################################
+
+#Jenkinsfile — Basic CI Pipeline
+pipeline{
+    agent any
+    stages{
+        stage('checkout'){
+            steps{
+                git branch: 'main', utl: 'https_xyzExample.git'
+            }
+        }
+        stage('build'){
+            steps{
+                sh'''
+                echo "App building"
+                '''
+            }
+        }
+        stage('test'){
+            steps{
+                sh'''
+                echo "App testing"
+                '''
+            }
+        }
+        stage('package'){
+            steps{
+                sh'''
+                echo "app package"
+                '''
+            }
+        }
+    }
+}
+
+#GitLab CI/CD — Basic Pipeline
+stages:
+    - build
+    - test
+    - deploy
+build:
+    stage: build
+    script:
+        - echo "Building app"
+
+test:
+    stage: test
+    script:
+        - echo "app testing"
+
+deploy:
+    stage: deploy
+    script:
+        - echo "deploying app"
+
+#Ansible — Install and Configure Nginx
+- name: Install and configure nginx
+  hosts: all
+  become: yes
+  tasks: 
+    - name: install nginx
+      yum:
+        name: nginx
+        state: present
+    - name: start nginx
+      service:
+        state: started
+        enabled: yes
+    - name: configure nginx.conf
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.config
+    - name: restart nginx
+      service:
+        state: restarted
+    
+#Terraform — EC2 with Security Group
+provider "aws" {
+    region = "ap-south-1"
+}
+
+resource "aws_security_group" "pathnex_sg"{
+    name = "pathnex-sg"
+    description = "sg to enable ssh and http"
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = 'tcp'
+        cidr = ["0.0.0.0/0"]
+    }
+
+    ingress{
+        from_port = 80
+        to_port = 80
+        protocol = 'tcp'
+        cidr = ["0.0.0.0/0"]
+    }
+
+    egress {
+        from_port = 0
+        to_port 0
+        protocol = '-1'
+        cidr = ["0.0.0.0/0"]
+    }
+}
+
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-0529"
+    instance_type = "t3.medium"
+    vpc_security_group_ids = [aws_security_group.pathnex.sg.id]
+
+}
+
+# Apache Container
+FROM ubuntu:22.04
+RUN apt update && apt install apache2 -y
+RUN echo "Hello pathnex" > /var/www/html/index.html
+CMD ["apchectl", "-D", "FOREGROUND"]
+
+#Real path
+/var/www/html
+
+#############################
+# Day 05 — Advanced CI/CD and Infrastructure Provisioning
+#############################
+
+## Jenkinsfile — With Git Integration and Testing
+pipeline{
+    agent any
+    stages{
+        stage('checkout'){
+            steps{
+                git branch: 'main', url:'https://github.com/pathnex/sample-repo.git'
+            }
+        }
+        stage('build'){
+            steps{
+                sh'''
+                echo "Building the app"
+                '''
+            }
+        }
+        stage('Test'){
+            steps{
+                sh'''
+                echo "testing the app"
+                '''
+            }
+        }
+        stage('Deploy'){
+            steps{
+                sh'''
+                echo "deploying the app"
+                '''
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — With Docker Build
+stages:
+    - build
+    - push
+    - deploy
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-app .
+
+push:
+    stage: push
+    script:
+        - docker push pathnex-app
+
+deploy:
+    stage: deploy
+    script:
+        - echo "Deploying the app"
+        - kubectl apply -f k8s_files/deployment.yaml
+
+##Ansible — Create User and Set Permissions
+
+- name: Create user and permission 
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create pathnex user
+      user:
+        name: pathnex-admin
+        state: present
+        shell: /bin/bash
+
+    - name: set permission
+      file:
+        path: /home/pathnex-admin
+        owner: pathnex-admin
+        group pathnex-admin
+        mode: '0755'
+
+##Terraform — EC2 with Tags and Volume
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-13108209129"
+    instance_type = "t2.medium"
+
+    tags = {
+        name = "pathnex-ec2"
+        project = "pathnex"
+        owner = "nayan"
+        environment = "dev"
+    }
+
+    ebs_block_device = {
+        device_name = "/dev/sdh"
+        volume_size = 50
+    }
+}
+
+##docker
+##python application
+print("Hello pathnex")
+
+FROM python:3.11
+WORKDIR /opt/pathnex/python-app
+COPY app.py /opt/pathnex/python-app
+CMD ["python", "/opt/pathnex/python-app/app.py"]
+
+#realpath
+/opt/pathnex/python-app
+
+##########################
+# Day 06 — Introduction to CloudFormation and Kubernetes Advanced Concepts
+##########################
+##Ansible — Install Docker
+
+- name: install docker
+  hosts: all
+  become: yes
+  tasks:
+    - name: install docker
+      yum:
+        name: docker
+        state: present
+    - name: Check version
+      command: docker --version
+    - name: start and enable docker
+      service:
+        state: started
+        enabled: yes
+    - name: check docker status
+      command: systemctl is-active docker
+
+##Terraform — Provisioning EC2 with VPC
+provider "aws"{
+    region = "ap-south-1"
+}
+
+resource "aws_vpc" "main"{
+    cidr = "10.0.0.0/16"
+}
+
+resource "aws_security_group" "pathnex_subnet"{
+    vpc_id = "aws_vpc.main.id"
+    cidr_block = "10.0.1.0/24"
+    availablity_zone = "ap-south-1a"
+    map_public_ip_on_launch = true  
+
+    tags = {
+        name = "pathenx-public-subnet"
+    }
+}
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-123"
+    instance_type = "t2.medium"
+    subnet_id = "aws_subnet.pathnex_subnet.id"
+
+    tags = {
+        name = "pathnex-ec2"
+
+    }
+}
+
+##Kubernetes — Pod with Volume Mount
+kind: Pod
+apiVersion: v1
+metadata: 
+    name: pathnex-pod
+spec:
+    containers:
+        - name: pathnex-app
+          image: nginx
+          volumeMounts:
+            - mountPath: /usr/share/nginx/html
+              name: html-volume
+          ports:
+            - containerPort: 80
+    volumes:
+        - name: html-volume
+          hostPath: 
+            path: /data
+            type: Directory
+
+Shell Script — Check for Running Services
+#!/bin/bash
+services = ("nginx", "docker", "httpd")
+for service in "${services[@]}"
+do
+    if systemctl is-active --quite $service; then
+        echo "$service is running"
+    else
+        echo "$service is stopped"
+    fi
+done
+
+# Node.js Application (JavaScript)
+console.log("Hello pathnex")
+
+# Docker File
+FROm node:18
+WORKDIR /opt/pathnex/node-app
+COPY app.js /opt/pathnex/node-app
+CMD ["node", "/opt/pathnex/node-app/app.js" ]
+
+#realpath
+/opt/pathnex/node-app
+
+##############################
+Day 07 — Automating Cloud Infrastructure with Terraform & Ansible
+##############################
+
+## Ansible — Setup Nginx with Custom Config
+- name: setup nginx with custom config
+  hosts: all
+  become: yes
+  tasks:
+    - name: install nginx
+      yum: 
+        name: nginx
+        state: present
+    - name: enable nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+    - name: copy nginx config file 
+      copy:
+        src: nginx.config
+        dest: /etc/nginx/nginx.config
+    - name: restart nginx
+      state: restarted
+
+###Terraform — Provision EC2 with IAM Role
+
+resource "aws_iam_role" "ec2_role"{
+    name = "pathnex-ec2-role"
+    assume_role_policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+            {
+                Action = "sts:AssumeRole"
+                Effect = "Allow"
+                Principal = {
+                    Service = "ec2.amazonaws.com"
+                }
+            }
+        ]
+    })
+}
+
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-123"
+    instance_type = "tw.medium"
+    iam_instance_profile = aws_iam_role.ec2.role.name
+
+    tags = {
+        name = "pathnex-ec2"
+    }
+}
+
+##Kubernetes — ConfigMap and Secret Management
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+    name: pathnex-config
+data:
+    app.property: |
+        key=value
+---
+kind: Secret
+apiVersion: v1
+metadata:
+    name: pathenx-secret
+type: Opaque
+data:   
+    password: password@123456
+
+##Shell Script — Archive Logs
+#!/bin/bash
+tar -czf /var/log/archived_logs.tar.gz /var/log/*.log
+
+# JavaScript
+class hello{
+    public static void main(String[] arg){
+        System.out.println("Hello Pathnex")
+    }
+}
+
+# Docker File
+
+FROM openjdk:17
+WORKDIR /opt/pathnex/python-app
+COPY hello.java /opt/pathnex/python-app/
+RUN javac /opt/pathnex/python-app/hello.java
+CMD ["java", "-cp", "//opt/pathnex/python-app/hello.java"]
+
+
+          
+
+
+
