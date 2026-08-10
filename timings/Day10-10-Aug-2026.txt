@@ -8,7 +8,7 @@ Class Assignment:
     - Self intro: done
 
 Self Assignment:  
-
+    - revised aws topics
 
 
 
