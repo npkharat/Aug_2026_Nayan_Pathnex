@@ -1,0 +1,25 @@
+Day-08 || 08-Aug-2026
+
+Class Assignment:
+    - Morning class: Attended (Was late by 15 mins)
+    - coding practice: done
+    - like_comment: done
+    - Evening class: done
+    - Self intro: done
+
+Self Assignment:
+    - revised aws service from todays class
+    - wrote complete week - 1 code (I can see the progress)
+    - revised aws sub-topics
+
+Next day Assignment:
+    - Watch previous months(july) 1 week video and cover all the topic covered in this week
+    - Write complete L2 , whole weeks code
+    - Revise this weeks topics - Linux, git, aws
+
+
+
+
+
+
+
