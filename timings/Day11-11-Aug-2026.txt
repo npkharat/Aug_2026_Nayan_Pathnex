@@ -4,8 +4,8 @@ Class Assignment:
     - Morning class: Done
     - coding practice: Done 
     - like_comment: Done
-    - Evening class: 
-    - Self intro: 
+    - Evening class: Done
+    - Self intro: Done
 
 Self Assignment:  
     - linux revision
