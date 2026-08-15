@@ -1,13 +1,16 @@
 Day-15 || 15-Aug-2026
 
 Class Assignment:
-    - Morning class: 
-    - coding practice:  
-    - like_comment: 
-    - Evening class: 
-    - Self intro: 
+    - Morning class: Done
+    - coding practice: Done
+    - like_comment: Done
+    - Evening class: Done
+    - Self intro: Done
 
 Self Assignment:  
+    - Kubernetes practical
+    - Kubernetes pdf revision
+    - Chatgpt research on kubernetes Concepts
 
 
 
