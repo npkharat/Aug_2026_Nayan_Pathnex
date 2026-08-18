@@ -1,0 +1,963 @@
+Revising week 2 - L2
+
+Day 08 — Introduction to Docker and CI/CD Pipelines
+Day 09 — Docker Integration with Jenkins & GitLab
+Day 10 — Advanced Kubernetes, Jenkins, and GitLab CI
+Day 11 — Kubernetes with Helm, Advanced Terraform and GitLab CI/CD
+Day 12 — Scaling Applications and Automation 
+Day 13 — Advanced Automation with CloudFormation and CI/CD
+Day 14 — Kubernetes Advanced Concepts & Multi-Environment Deployments
+
+###########
+# Ansible #
+###########
+
+#Ansible — Install Docker Compose
+- name: Install docker compose
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install dependencies
+        yum:
+            name: "python3-pip"
+            state: present
+    - name: Install docker Compose
+        pip:
+            name: docker-compose
+
+#Ansible — Setup Docker Container for Nginx
+- name: Setup Docker Container for Nginx
+  hosts: all
+  become: yes
+  tasks: 
+    - name: install docker
+      yum:
+        name: docker
+        state: present
+    - name: Pull nginx image
+      docker_image:
+        name: nginx
+        source: pull
+    - name: Run nginx Container
+      docker_container:
+        name: nginx-container
+        image: nginx
+        state: started
+        published_ports:
+            - "8080:80"
+
+##Ansible — Create Docker Containers for Multiple Applications
+- name: Create Docker Containers for Multiple Applications
+  hosts: all
+  become: yes
+  tasks:
+    - name: pull nginx image
+      docker_image:
+        name: nginx
+        state: pull
+    - name: pull http image
+      docker_image:
+        name: httpd
+        state: pull
+    - name: pull swl image
+      docker_image:
+        name: sql:latest
+        state: pull
+    - name: start nginx container
+      docker_container:
+        name: nginx-container
+        image: nginx
+        state: started
+        published_ports:
+            - "8080:80"
+    - name: start apache container
+      docker_container:
+        name: httpd-container
+        image: httpd
+        state: started
+        published_ports:
+            - "8081:80"
+    - name: start sql container
+      docker_container:
+        name: sql-container
+        image: sql
+        state: started
+        published_ports:
+            - "3306:3306"
+
+##Ansible — Install Helm on Server
+- name: Install Helm chart
+  hosts: all
+  become: yes
+  tasks: 
+    - name: download Helm
+      get_url:
+        url: "https://get.helm.sh/helm-v3.7.0-linux-amd64.tar.gz" 
+        dest: /tmp/helm.tar.gz
+    - name: extract helm package
+      unarchive:
+        src: /tmp/helm.tar.gz
+        dest: /usr/local/bin/
+        remote_src: yes
+    - name: Set helm permission binaries
+      file:
+        path: /usr/local/bin/helm
+        mode: '0755'
+
+##Ansible — Setup Auto-Scaling Group (ASG) & creating templete
+- name: Setup auto scaling Group
+  hosts: localhost
+  connection: local
+  gather_facts: false 
+  collections:
+    - amazon.aws
+  tasks:
+    - name: Create launch templete
+      amazon.aws.ec2_launch_templete:
+        name: pathnex-launch-templete
+        region: ap-south-1
+        image_id: ami-xxxxxxxxxxxxxx
+        instance_type: t2.micro
+        security_group_ids:
+            - sg-xxxxxxxxxxxxxx
+    - name: Create auto scaling Group
+      amazon.aws.autoscaling_group:
+        name: pathnex-asg 
+        region: ap-south-1
+        launch_templete:
+            launch-templete_name: pathnex-launch-templete
+            version: "$Latest"
+        vpc_zone_identifier:
+            - subnet-xxxxxxxxxxxxxx
+        min_size: 1
+        maz_size: 3
+        desired_capacity: 2
+        wait_for_instance: true
+        tags: 
+            - key: Name 
+              value: pathnex-instance
+              propagate_at_launch: true
+
+##Ansible — Multi-Node Nginx Setup
+- name: Multi-Node Nginx Setup
+  hosts: all
+  become: yes
+  tasks: 
+    - name: install nginx
+      yum: 
+        name: nginx
+        state: present
+    - name: enable nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+##Ansible — Setup Nginx with Reverse Proxy
+- name: Setup Nginx with Reverse Proxy
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install nginx
+      yum:
+        name: nginx
+        state: present
+    - name: copy ngnix.config file
+      templete:
+        src: reverse-proxy.conf.j2
+        dest: /etc/ngnix/conf.d/reverse-proxy.conf
+    - name: Restart ngnix
+      service:
+        name: nginx
+        state: restarted
+        enabled: yes
+
+#############
+# Terraform #
+#############
+#Terraform — EC2 with Security Group and EBS Volume
+provider "aws"{
+    region = "ap-south-1"
+}
+resource "aws_security_group" "pathnex_sg_allow_ssh_http"{
+    name = "allow_ssh_http"
+    description = "Allow SSH and HTTP ports"
+
+    ingress{
+        description = "ssh"
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_block = "[OUR_PUBLIC_ID/32]"
+    }
+
+    ingress{
+        description = "http"
+        from_port = 80
+        to_port = 80
+        protocol = "tcp"
+        cidr_block = ["OUR_PUBLIC_ID/32"]
+    }
+
+    egress{
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_block = ["0.0.0.0/0"]
+    }
+}
+
+
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-xxxxxxxxxxxxxx"
+    instance_type = "t2.micro"
+    security_group_ids = [aws_security_group.pathnex_sg_allow_ssh_http.id]
+
+    ebs_block_device{
+        device_name = "/dev/sdh"
+        volume_size = 30
+        volume_type = "gp3"
+    }
+    tags = {
+        Name = "pathnex-ec2"
+        Owner = "pathnex"
+        Project = "devops-course"
+    }
+}
+
+
+##Terraform — EC2 with Auto Scaling Group
+provider "aws" {
+    region = "ap-south-1"
+}
+
+resource "aws_launch_configuration" "pathnex_templete"{
+    name = "pathnex-templete"
+    image_id = "ami-xxxxxxxxxxxxxx"
+    instance_type = "t2.medium"
+    vpc_security_group_ids = {
+        aws_security_group.pathnex_sg_allow_ssh_http.id
+    }
+    key_name = "nayan_key_pem"
+
+    block_device_mappings{
+        device_name = "/dev/sdh"
+    }
+
+    ebs{
+        volume_size = 30
+        volume_type = "gp3"
+        delete_on_termination = true
+        encrypted = true
+    }
+
+    tags = {
+        name = "pathnex-templete"
+    }
+}
+
+resource "aws_autoscaling_group" "pathnex_asg"{
+    name = "pathnex-asg"
+
+    min_size = 1
+    max_size = 3
+    desired_capacity = 2
+
+    vpc_zone_identifier = [
+        "subnet-xxxxxxxxxxxxxx",
+        "subnet-yyyyyyyyyyyyyy"
+    ]
+
+    launch_templete {
+        id = aws_launch_templete.pathnex_templete.id
+        version = "$Latest"
+    }
+
+    tag = {
+        key = "Name"
+        value = "pathnex-asg-instance"
+        propagate_at_launch = true
+    }
+}
+
+##Terraform — VPC with Private and Public Subnets
+provider "aws" {
+    region = "ap-south-1"
+}
+
+resource "aws_vpc" "main" {
+    cidr_block = ""10.0.0.0.16
+    tags = {
+        name = "main-vpc"
+    }
+}
+resource "aws_subnet" "pathnex_pub_sub"{
+    vpc_id = aws_vpc.main.id
+    cidr_block = "10.0.1.0/24"
+    avaiablity_zone = "ap-south-1a"
+    map_public_ip_on_launch = true
+    tags = {
+        name = "pathnex-public-subnet"
+    }
+}
+
+resource "aws_subnet" "patnex_private_sub{
+    vpc_id = aws_vpc.main.id
+    cidr_block = "10.0.2.0/24"
+    avaiablity_zone = "ap-south-1b"
+    tags = {
+        name = "pathnex-private-subnet"
+    }
+}
+
+#Terraform — Provision EC2 with Elastic IP
+provider "aws"{
+    region = "ap-south-1"
+}
+
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-xxxxxxxxxxxxxx"
+    instance_type = "t2.micro"
+    subnet_id = "subnet-xxxxxxxxxxxxxx"
+    security_group_ids = [aws_security_group.pathnex_sg_allow_ssh_http.id]
+    key_name = "nayan-key"
+    root_block_device{
+        volume_size = 30
+        volume_type = "gp3"
+        encrypted = true
+        delete_on_termination = true
+    }
+    tags = {
+        name = "pathnex-ec2"
+    }
+}
+
+resource "aws_eip" "pathnex_eip"{
+    domain = "vpc"
+    tags = {
+        name = "pathenx-elastic-ip"
+    }
+}
+
+resource "aws_eip_association" "pathnex_eip_asso"{
+    instance_id = aws_instance.pathnex_ec2.id
+    allocation_id = aws_eip.pathnex_eip.id
+}
+
+##Terraform — Create a Load Balancer with EC2 Instances
+
+resource "aws_lb" "pathnex_lb" {
+    name = "pathnex-lb"
+    internal = false
+    load_balancer_type = "application"
+    security_groups = [aws_security_group.allow_ssh_http.id]
+    subnets = [aws_subnet.public.id]
+}
+
+resource "aws_instance" "pathnex_ec2" {
+    ami = "ami-xxxxxxxxxxxxxx"
+    instance_type = "t2.micro"
+    subnet_id = "subnet-xxxxxxxxxxxxxx"
+    security_group_ids = [aws_security_group.pathnex_sg_allow_ssh_http.id]
+    tags = {
+        name = "pathnex-ec2"
+    }
+}
+
+#Terraform — Create IAM Users and Policies
+resource "aws_iam_user" "pathnex_user"{
+    name = "pathnex-user"
+
+}
+
+resource "aws_iam_policy" "pathnex_s3_policy"{
+    name = "pathnex-s3-policy"
+    policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+            {
+                Effect = "Allow"
+                Action = "s3:ListBucket"
+                Resource = "arn:aws:s3:::pathnex-bucket"
+            }
+        ]
+    })
+}
+
+resource "aws_iam_user_policy_attachment" "pathnex_user_attachement"{
+    user = aws_iam_user.pathnex_user.name
+    policy_arn = aws_iam_policy.pathnex_s3_policy_arn
+}
+
+#Terraform — Create S3 Bucket with Versioning and Logging
+
+resource "aws_s3_bucket" "pathnex_s3"{
+    bucket = "pathenx-bucket"
+    Versioning = {
+        enabled = true
+    }
+    logging = {
+        target_bucket = "pathnex-log-bucket"
+        target_prefix = "logs/"
+    }
+}
+
+##############
+# Kubernetes #
+##############
+
+#Kubernetes — Service with NodePort
+kind: Service
+apiVersion: v1
+metadata:
+    name: pathnex-service
+spec:
+    type: NodePort
+    selector:
+        app: pathnex-app
+    ports:
+        - protocol: TCP 
+          port: 80
+          nodePort: 30070
+
+#Kubernetes — Horizontal Pod Autoscaler (HPA)
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: pathnex-deployment 
+spec:
+    replicas: 2
+    selector:
+        matchLables:
+            app: pathnex-app
+    templete:
+        metadata:
+            labels: 
+                app: pathnex-app
+        spec:
+            containers:
+                - name: app
+                  image: nginx:latest
+                  ports:
+                    - containerPort: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+    name: pathnex-hpa
+spec:
+    scaleTargetRef: 
+        apiVersion: apps/v1
+        kind: Deployment
+        name: pathnex-deployment
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage = 50
+
+##Kubernetes — Deploying StatefulSet
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+    name: pathnex-statefullset
+spec:
+    serviceName: "pathnex-db"
+    replicas: 3
+    selector:
+        matchLables:
+            app: pathnex-db
+    templete:
+        metadata:
+            labels:
+                app: pathnex-db
+        spec:
+            containers:
+                - name: db
+                  image: mysql:5.7
+                  volumeMounts:
+                    - mountPath: /var/lib/mysql
+                      name: mysql-storage
+    
+    volumeClaimtemplates:
+        - metadata:
+            name: my-sql-storage
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+                requests:
+                    storage: 1Gi
+
+##Kubernetes — Helm Chart for Nginx
+helm repo add stable https://charts.helm.sh/stable
+helm install pathnex-nginx  stable/nginx-ingress
+
+
+##Kubernetes — Horizontal Pod Autoscaler (HPA) with Load Balancer
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: pathnex-deployment
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: app
+                  image: nginx:latest
+                  ports:
+                    - containerPort: 80
+---
+kind: HorizontalPodAutoscaler
+apiversion: autoscaling/v2
+metadata: 
+    name: pathnex-web-app-Autoscaler
+spec:
+    scaletargetRef:
+        kind: Deployment
+        apiversion: apps/v1
+        name: pathnex-deployment
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 50
+
+##Kubernetes — Deploy Nginx with ConfigMap and Secrets
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: pathnex-configmap 
+data: 
+    nginx.conf: |
+        server{
+            listen 80;
+            server_name localhost;
+            location / {
+                root /usr/share/nginx/html;
+                index index.html index.htm
+            }
+        }
+---
+kind: Secret
+apiVersion: v1
+metadata:
+    name: pathnex-secret 
+type: Opaque
+data:
+    password: xxxxxxxxxxxxxx
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata: 
+    name: pathnex-deployment
+spec:
+    replicas: 2
+    selector:
+        matchlabels:
+            app: pathnex-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: app
+                  image: nginx
+                  ports:
+                    - containerPort: 80
+                  volumeMounts:
+                    - mountPath: /etc/nginx/nginx.conf
+                      name: nginx-config
+                      subPath: nginx.conf
+            volume:
+                - name: nginx-config
+                  configMap:
+                    name: pathnex-config
+                - name: pathnex-secret
+                  secret:
+                    secretName: ngnix-secret
+
+#Kubernetes — Ingress with Nginx Controller
+apiVersion: networking.k8s.io/v1
+kind: ingress
+metadata:
+    name: pathnex-ingress
+    annotations:
+        ngnix.ingress.kubernetes.io/rewrite-target: /
+spec:
+    rules:
+        - host: pathnex.local
+         http:
+            paths:
+                - path: /
+                  pathType: Prefix 
+                  backend:
+                    service:    
+                        name: pathnex-service
+                        port:
+                            number: 80
+
+###########
+# jenkins #
+###########
+
+#Jenkinsfile — Docker Build and Push
+pipeline{
+    agent any 
+    stages{
+        stage('Build'){
+            steps{
+                script{
+                    docker.build('pathnex-app')
+                }
+            }
+        }
+        stage('Docker push'){
+            steps{
+                script{
+                    docker.withRegistry('https://docker.io', 'docker-credentials'){
+                        docker.image('pathnex-app').push('latest')
+                    }
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Build & Push Docker Image
+stages:
+    - build
+    - push
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-app .
+push:
+    stage: push
+    script:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push pathnex-app
+
+dockerfile
+FROM alpine:latest
+WORKDIR /opt/pathnex/alpine-app
+ENTRYPOINT ['echo']
+CMD ["Hello pathnex"]
+
+#Jenkinsfile — Deploy to Kubernetes
+pipeline{
+    agent any
+    stages{
+        stage('Deploy on kubernetes'){
+            steps{
+                script{
+                    sh 'kubectl apply -f deployment.yaml'
+                }
+            }
+        }
+    }
+}
+
+#GitLab CI/CD — Deploy to Kubernetes
+stages:
+    - deploy
+deploy:
+    stage: deploy
+    script:
+        - kubectl apply -f deployment.yaml
+
+#dockerfile
+FROM ubuntu:22.04
+ENV INSTITUTE=pathnex
+ENV COURSE=DevOps
+ENTRYPOINT ["echo"]
+CMD["$INSTITUTE - $COURSE"]
+
+
+##Jenkinsfile — Build and Deploy to Kubernetes
+pipeline{
+    agent any
+    environment{
+        IMAGE_NAME = 'pathnex-web-app'
+    }
+    stages{
+        stage('Build'){
+            steps{
+                script{
+                    docker.build("$IMAGE_NAME")
+                }
+            }
+        }
+        stage('Push'){
+            steps{
+                script{
+                    docker.withRegistry('https://docker.io', 'docker-credentials'){
+                        docker.image("IMAGE_NAME").push('latest')
+                    }
+                }
+            }
+        }
+        stage('Deploy'){
+            steps{
+                script{
+                    sh 'kubectl apply -f deployment.yaml'
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Build, Push, and Deploy
+stages:
+    - build
+    - push
+    - deploy
+build:
+    stage:build
+    script:
+        - docker build -t pathnex-app .
+push:
+    stage: push
+    script:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push pathnex-app
+deploy:
+    stage: deploy
+    script:
+        - kubectl apply -f deployment.yaml
+
+##Docker
+FROM ubuntu:22.04
+WORDIR /opt/pathnex/devops-project
+COPY . /opt/pathnex/devops-project
+ENTRYPOINT["#!/bin/bash"]
+CMD["ls", "-l", "/opt/pathnex/devops-project"]
+
+##Jenkinsfile — Multi-Stage Pipeline
+pipeline{
+    agent any
+    environment{
+        IMAGE_NAME = 'pathnex-web-app'
+    }
+    stages{
+        stage('checkout'){
+            steps{
+                git branch: 'main' , url: 'https://github.com/pathnex/sample-repo.git'
+            }
+        }
+        stage('build'){
+            steps{
+                script{
+                    docker.build("${env.IMAGE_NAME}")
+                }
+            }
+        }
+        stage('push'){
+            steps{
+                script{
+                    docker.withRegistry('https://docker.io', 'docker-credintials'){
+                        docker.image("${env.IMAGE_NAME}").push('latest')
+                    }
+                }
+            }
+        }
+        stage('Deploy'){
+            steps{
+                script{
+                    sh '''
+                    kubectl apply -f deployment.yaml
+                    '''
+                }
+            }
+        }
+    }
+}
+
+#GitLab CI/CD — Build, Push, and Deploy with Helm
+stages:
+    - build
+    - push
+    - deploy
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-app .
+push:
+    stage: push
+    script:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push pathnex-app
+deploy:
+    stage: deploy
+    script:
+        - helm repo add stable "https://charts.helm.sh/stable"
+        - helm install pathnex-nginx stable/nginx-ingress
+
+##Docker
+FROM nginx
+EXPOSE 80
+docker run -d -p 8080:80 nginx
+
+##Jenkinsfile — Implement Parallel Stages
+pipeline{
+    agent any
+    stages{
+        stage('Parallel task'){
+            parallel {
+                stage('build'){
+                    steps{
+                        sh'''
+                        echo "Building app"
+                        '''
+                    }
+                }
+                stage('test'){
+                    steps{
+                        sh'''
+                        echo "Testing"
+                        '''
+                    }
+                }
+            }
+            stage('Deploy'){
+                steps{
+                    sh'''
+                    echo "Deploying appliction"
+                    '''
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — = Jobs for Build & Test
+stages:
+    - build
+    - test
+    - deploy
+
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-app .
+test:
+    stage: test
+    script:
+        - docker run pathnex-app npm test
+deploy:
+    stage: deploy
+    script:
+        - kubectl apply -f kubernetes/deployment.yaml
+
+
+##Docker
+FROM ubuntu:22:04
+VOLUME ["/opt/pathnex/data"]
+CMD["sleep", "1000"]
+
+##Script
+docker volume create pathnex-volume
+
+##Jenkinsfile — Multi-Branch Pipeline with Docker Build
+
+pipeline{
+    agent any
+    stages{
+        stage('Build'){
+            steps{
+                script{
+                    docker.build('pathnex-app')
+                }
+            }
+        }
+        stage('Dploy'){
+            steps{
+                script{
+                    kubectl apply -f kubernetes/deployment.yaml
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Advanced Deployment with Helm
+stages:
+    - build
+    - push
+    - deploy
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-app .
+
+push:
+    stage: push
+    script:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push pathnex-app
+deploy:
+    stage: deploy
+    script:
+        - helm repo add pathnex https://charts.pathnex.com
+        - helm install patnex-nginx pathnex/nginx-ingress
+
+##Docker
+FROM ubuntu
+COPY patnex.txt /opt/pathnex/project-devops/
+ADD pathnex.tar.gz /opt/pathnex/extracted
+
+##Jenkinsfile — Build, Test, and Deploy with Stages
+pipline{
+    agent any
+    stages{
+        stage('Build'){
+            steps{
+                script{
+                    docker.build('pathnex-app')
+                }
+            }
+        }
+        stage('test'){
+            steps{
+                sh'''
+                echo Testing
+                '''
+            }
+        }
+        stage('deploy'){
+            steps{
+                script{
+                    sh 'kubectl apply -f deployment.yaml'
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Multi-Stage Deployment with Helm
+stages:
+    - build
+    - test
+    - deploy
+
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-app
+test:
+    stage: build
+    script:
+        - docker run pathnex-app nom test
+deploy:
+    stage: deploy
+    script:
+        - helm upgrade --install pathnex-nginx pathnex/nginx-ingress
+
+
+##dockerfile
+FROM ubuntu
+ENTRYPOINT ["echo"]
+CMD ["Hello pathnex"]
