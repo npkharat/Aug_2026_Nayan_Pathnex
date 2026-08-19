@@ -1,13 +1,15 @@
 Day-19 || 19-Aug-2026
 
 Class Assignment:
-    - Morning class: 
-    - coding practice:  
-    - like_comment: 
-    - Evening class: 
-    - Self intro: 
+    - Morning class: Done (30 mins live later i had client meeting hence watch recorded video on youtube)
+    - coding practice:  Done
+    - like_comment: Done
+    - Evening class: Done
+    - Self intro: Done
 
 Self Assignment: 
+    - Homework of CAB meeting video
+    - Argo CD basics
 
 
 

@@ -1,127 +1,90 @@
-L1
-# Day 08 — Variables, VPC, Probes, Loops
+# Day 10 — Conditions, Route Table, Secret, Loops
 
-##Ansible — Install Packages Using Variables
-- name: Install package for pathnex using Variables
+## Ansible — When Condition
+
+- name: Install tool based on OS
   hosts: all
   become: yes
-  vars:
-    pathnex_packages:
-        - tree 
-        - unzip
-        - vim 
   tasks:
-    - name: Install req Packages
+    - name: Install htop
       yum:
-        name: "{{pathnex_packages}}"
+        name: htop
         state: present
+      when: ansible_fact['os_family'] == "RedHat"
 
-##Terraform — Create VPC + Subnet
-provider "aws"{
-    region = "ap-south-1"
+
+## Terraform — Route Table + Association
+
+resource "aws_route_table" "pathnex_rt" {
+    vpc_id = aws_vpc.pathnex_vpc.id
+
+    route{
+        cidr_block = "0.0.0.0/0"
+        gateway_id  = aws_internet_gateway.pathnex_igw.id
+    }
 }
 
-resource "aws_vpc" "main"{
-    cidr_block = "10.0.0.0/16"
+resource "aws_route_table_association" "pathnex_rta"{
+    subnet_id = aws_subnet.pathnex_subnet.id
+    route_table_id = aws_route_table.pathnex_rt
 }
 
-resource "aws_subnet" "pathnex_subnet"{
-    vpc_id = aws_vpc.main.id
-    cidr_block = "10.0.1.0/24"
-    map_public_ip_on_launch = true
-}
+## Kubernetes — Secret
 
-## Kubernetes — Add Liveness & Readiness Probes
+kind: Secret
 apiVersion: v1
-kind: Pod
-metadata: 
-    name: pathnex-pod 
-spec:
-    containers:
-        - name: web
-          image: nginx
-          livenessProbe:
-            httpGet:
-                path: /health-live
-                port: 80
-            initialDelaySeconds: 5
-          redinessProbe:
-            httpGet:
-                path: /health-ready
-                port: 80
-            initialDelaySeconds: 5
+metadata:
+    name: pathnex-secret 
+type: Opaque
+data:
+    password: ksfwe89orjwidjildj
 
-## Shell Script — Loop Through List
+## Shell Script — For Loop 1–10
 #!/bin/bash
-for item in pathnex devops training;
-do 
-    echo "Item: $item"
+for i in {1..10}; 
+do
+    echo "Number: $i"
 done
 
-
-# Conditional Stages
-
-## Jenkins Pipeline — Conditional Execution
-
-pipeline {
+# Caching Dependencies
+## Jenkins Pipeline — Cache Maven Dependencies
+pipeline{
     agent any
-    parameters{
-        string(name: 'ENVIRONMENT', defaultValue: 'dev', description: 'Environment' )
-    }
     environment{
-        INSTITUTE_NAME = "pathnex"
+        INSTITUTE_NAME = "Pathnex"
     }
-
     stages{
         stage('Checkout'){
             steps{
-                git branch: 'main' , url: 'https://github.com/Pathnex/sample-java-app.git'
+                git url: 'https://github.com/Pathnex/sample-java-app.git'
             }
         }
         stage('Build'){
-            when{
-                branch 'main'
-            }
             steps{
                 sh'''
-                mvn clean compile
-                '''
-            }
-        }
-        stage('Deploy'){
-            when{
-                expression {params.ENVIRONMENT == 'dev'}
-            }
-            steps{
-                sh'''
-                echo "Deploying to $ENVIRONMENT by $INSTITUTE_NAME"
+                if [ -d ".m2" ];
+                then
+                    echo "Using cached Dependencies"
+                else:
+                    mvn clean compile
+                fi 
                 '''
             }
         }
     }
 }
 
-## GitLab CI — Conditional Jobs
+## GitLab CI — Cache Dependencies
 stages:
     - build
-    - deploy
-variables:
-    CI_ENVIRONMENT_NAME: "production"
-    OWNER: "pathnex"
 build:
     stage: build
     image: maven:3.8.1-jdk-17
+    cache:
+        key: maven-cache
+        path:
+            - .m2/repository
     script:
         - git clone https://github.com/Pathnex/sample-java-app.git
         - cd sample-java-app
         - mvn clean compile
-    only:
-        - main
-deploy:
-    stage: deploy
-    image: alpine:latest
-    script:
-        - echo "Deploying to $CI_ENVIRONMENT_NAME by $OWNER"
-    only:
-        variables:
-            - $CI_ENVIRONMENT_NAME == "dev"
