@@ -1,0 +1,101 @@
+# Day 11 — Database, Outputs, Sidecars, Functions
+
+## Ansible — Install MariaDB
+- name: Install MariaDB
+  hosts: all
+  become: yes
+  tasks:
+    - name: install MariaDB
+      yum:
+        name: mariadb-server
+        state: present
+    - name: start server
+      service:
+        state: started
+        enabled: yes
+
+## Terraform — Output Public IP (r5.2xlarge)
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-xxxxxxxxxxxx"
+    instance_type = "r5.2xlarge"
+    tags = {
+        name = "pathnex-server"
+    }
+}
+
+output "pathnexPublicIP"{
+    value = aws_instance.pathnex_ec2.public_ip
+}
+
+##Kubernetes — Sidecar Container
+apiVersion: v1
+kind: Pod
+metadata:
+    name: pathenx-sidecar 
+spec:
+    containers:
+        - name: main
+          image: nginx
+        - name: sidecar
+          image: busybox
+          command: ["sh", "-c", "echo Sidecar running ; sleep 3600"]
+
+
+## Shell Script — Function Example
+#!/bin/bash
+greet(){
+    echo "Welcome to pathnex devops traininig"
+}
+
+greet
+
+# Notifications
+
+## Jenkins Pipeline — Email Notifications
+pipeline{
+    agent any
+    environment{
+        INSTITUTE_NAME = "pathnex"
+    }
+
+    stages{
+        stage('Checkout'){
+            steps{
+                git url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('build'){
+            steps{
+                sh'''
+                mvn clean package
+                '''
+            }
+        }
+    }
+    post {
+        success{
+            mail to: 'team@pathnex.com'
+                subject: "SUCCESS: Build #${env.BUILD_NUMBER}"
+                body: "BUILD completed successfully for $INSTITUTE_NAME"
+        }
+        failure{
+            mail to: 'team@pathnex.com'
+                subject: "FAILURE: Build #${env.BUILD_NUMBER}"
+                body: "BUILD failed for $INSTITUTE_NAME"
+        }
+    }
+
+}
+
+## GitLab CI — Notifications
+stages: 
+    - build
+build:
+    stage: build
+    image: maven-3.8.1-jdk-17
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd sample.java.app
+        - mvn clean package
+    after_script:
+        - echo "Sending mail to team@pathnex.com"    
