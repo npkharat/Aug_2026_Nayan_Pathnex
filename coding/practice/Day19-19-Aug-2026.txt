@@ -1,0 +1,90 @@
+# Day 10 — Conditions, Route Table, Secret, Loops
+
+## Ansible — When Condition
+
+- name: Install tool based on OS
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install htop
+      yum:
+        name: htop
+        state: present
+      when: ansible_fact['os_family'] == "RedHat"
+
+
+## Terraform — Route Table + Association
+
+resource "aws_route_table" "pathnex_rt" {
+    vpc_id = aws_vpc.pathnex_vpc.id
+
+    route{
+        cidr_block = "0.0.0.0/0"
+        gateway_id  = aws_internet_gateway.pathnex_igw.id
+    }
+}
+
+resource "aws_route_table_association" "pathnex_rta"{
+    subnet_id = aws_subnet.pathnex_subnet.id
+    route_table_id = aws_route_table.pathnex_rt
+}
+
+## Kubernetes — Secret
+
+kind: Secret
+apiVersion: v1
+metadata:
+    name: pathnex-secret 
+type: Opaque
+data:
+    password: ksfwe89orjwidjildj
+
+## Shell Script — For Loop 1–10
+#!/bin/bash
+for i in {1..10}; 
+do
+    echo "Number: $i"
+done
+
+# Caching Dependencies
+## Jenkins Pipeline — Cache Maven Dependencies
+pipeline{
+    agent any
+    environment{
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages{
+        stage('Checkout'){
+            steps{
+                git url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('Build'){
+            steps{
+                sh'''
+                if [ -d ".m2" ];
+                then
+                    echo "Using cached Dependencies"
+                else:
+                    mvn clean compile
+                fi 
+                '''
+            }
+        }
+    }
+}
+
+## GitLab CI — Cache Dependencies
+stages:
+    - build
+build:
+    stage: build
+    image: maven:3.8.1-jdk-17
+    cache:
+        key: maven-cache
+        path:
+            - .m2/repository
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd sample-java-app
+        - mvn clean compile
