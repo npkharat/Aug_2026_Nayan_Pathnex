@@ -1,13 +1,15 @@
 Day-21 || 21-Aug-2026
 
 Class Assignment:
-    - Morning class: 
-    - coding practice:  
-    - like_comment: 
+    - Morning class: Done (Watched recording on youtube)
+    - coding practice:  done
+    - like_comment: done
     - Evening class: 
-    - Self intro: 
+    - Self intro: done
 
 Self Assignment: 
+    - Teraform basic
+    - gitlabCI - matrix - pipeline understanding
 
 
 
