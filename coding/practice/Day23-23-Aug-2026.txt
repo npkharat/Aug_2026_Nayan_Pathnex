@@ -1,0 +1,446 @@
+L2 - 16, 17, 18 completed
+Day 16 — Advanced CloudFormation & Multi-Region Deployments
+Ansible — Create and Start EC2 Instances
+
+- name: Crate and start EC2 instance 
+  hosts: all
+  become: true
+  tasks:
+    - name: create EC2 in us-east-1
+      ec2_instance:
+        name: pathnex-ec2-us-east-1
+        key_name: pathnex-key
+        region: us-east-1
+        instance_type: t2.micro
+        image: ami-xxxxxxxxxxxxxxx
+        wait: yes
+    
+    - name: Create instance in us-west-1
+      ec2_instance:
+        name: instance-us-west
+        key_name: pathnex-key
+        region: us-wst-1
+        instance_type: t2.micro
+        image: ami-xxxxxxxxxxxxxxx
+        wait: yes
+
+##Terraform — Multi-Region VPC with EC2
+resource "aws_vpc" "main_us_east"{
+    cidr_block = "10.0.0.0/16"
+    region = "us-east-1"
+    tags = {
+        name = "pathnex-us-east-1-vpc"
+    }
+}
+
+resource "aws_vpc" "main_us_west"{
+    cidr_block = "10.1.0.0/16"
+    region = "us-west-1"
+    tags = {
+        name = "pathnex-us-west-1-vpc"
+    }
+
+}
+
+resource "aws_instance" "pathnex_ec2_us_west"{
+    ami = "ami-xxxxxxxxxxxxxxx"
+    instance_type = "t2.micro"
+    region "us-west-1"
+    tags = {
+        name = "pathnex-ec2-us-west-1"
+    }
+}
+
+##Kubernetes — Multi-Cluster Deployment with Federation
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: pathnex-deployment 
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: app
+                  image: ngnix
+                  ports:
+                    - containerPort: 80
+---
+kind: Service 
+apiVersion: v1
+metadata: 
+    name: pathnex-service 
+spec:
+    selector:
+        app: pathnex-app
+    ports:
+        - protocol: TCP
+          port: 80
+
+##Jenkinsfile — Deploy to Multi-Cluster Environments
+pipeline{
+    agent any
+    environment {
+        CLUSTER = "us-east-1"
+    }
+    stages{
+        stage('Build'){
+            steps{
+                script{
+                echo "Building docker images..."
+                docker.build('pathnex-web-app')
+                }
+            }
+        }
+        stage('Test'){
+            steps{
+                sh'''
+                echo "testing...."
+                '''
+            }
+        }
+
+        stage('Deploy to Kubernetes'){
+            steps{
+                script{
+                    if (env.CLUSTER == 'us-east-1'){
+                        sh'''
+                        kubectl --context=us-east-1 apply -f kubernetes/deployment.yaml
+                        '''
+                    } 
+                    else{
+                        sh'''
+                        kubectl --context=us-west-1 apply -f kubernetes/deployment.yaml
+                    }
+                }
+            }
+        }
+    }
+}
+
+#GitLab CI/CD — Multi-Region Deployment with Kubernetes
+stages:
+    - build
+    - push
+    - deploy
+
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-web-app . 
+push:
+    stage: push
+    script:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push pathnex-web-app
+deploy:
+    stage: deploy
+    script:
+        - |
+          if [ $COMMMIT_REF == "main" ];
+          then
+            kubectl --context=us-east-1 apply -f kubernetes/prod-deployment.yaml
+          else
+            kubectl --contect=us-west-1 apply -f kubernetes/dev-deployment.yaml
+          fi
+
+# Shell Script Execution 
+#!/bin/bash
+echo "Hello Pathnex"
+
+# Docker File
+FROM ubuntu:22.04
+WORKDIR /opt/pathnex/scripts
+COPY start.sh /opt/pathnex/scripts
+RUN chmod +x /opt/pathnex/scripts/start.sh
+CMD ["/opt/pathnex.scripts.start.sh"]
+
+
+# Day 17 — Multi-Cloud Deployments, Auto-healing, and Advanced CI/CD
+
+## Ansible — Auto-healing Web Servers with Systemd
+- name: configure Auto-healing for webservers
+  hosts: all
+  become: yes
+  tasks:
+    - name: ensure ngnix is running
+      service:
+        name: ngnix
+        state: started
+        enabled: yes
+    - name: auto start for ngnix service
+      lineinfile:
+        path: /etc/systemd/system/ngnix.service.d/override.conf 
+        line: "Restart=always"
+        create: yes
+    - name: Reload ngnix
+      command: systemctl demon-reload
+
+##Terraform — Multi-Cloud Infrastructure with AWS and Azure
+
+resource "aws_vpc" "main"{
+    cidr_block = "10.0.0.0/16"
+}
+
+resource "azurerm_virtul_network" "main" {
+    name = "pathnex-vnet"
+    location = "East US"
+    address_space = ["10.0.0.0/16"]
+    resource_group_name = azurerm_resource_group.main.name
+}
+
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-xxxxxxxxxxxxxxx"
+    instance_type = "t2.micro"
+    region = "us-east-1"
+}
+
+resource "azurerm_linux_virtual_machine" "pathnex_vm" {
+    name = "pathnex-azure-vm"
+    resource_group_name = "azurerm_resource_group.main.name"
+    location = azurerm_resource_group.main.location
+    size = "Standard_B1s"
+    admin_username = "azureuser"
+    admin_password = "Passwordz2123"
+}
+
+
+##Kubernetes — Self-Healing with Liveness and Readiness Probes
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: pathnex-web-app
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-web-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-web-app
+        spec:
+            containers:
+                - name: app
+                  image: ngnix
+                  ports:
+                    containerPort: 80
+                  livenessProbe:
+                    httpGet:
+                        path: /healthz
+                        port: 80
+                    initialDelaySeconds: 5
+                    periodSeconds: 10
+                  readinessProbe:
+                    htteGet:
+                        path: /healthz
+                        port: 80
+                    initialDelaySeconds: 5
+                    periodSeconds: 10   
+
+##Jenkinsfile — Rolling Deployments with Kubernetes
+
+pipeline{
+    agent any
+    environment{
+        IMAGE_NAME = 'pathnex-web-app'
+    }
+
+    stages{
+        stage('Build'){
+            steps{
+                sh'''
+                echo "Building docker image"
+                docker.build("${env.IMAGE_NAME}")
+                '''
+            }
+        }
+        stage('Test'){
+            steps{
+                script{
+                    sh'''
+                    echo "Running tests"
+                    '''
+                }
+            }
+        }
+        stage('Deply to kubernetes'){
+            steps{
+                script{
+                    sh'''
+                    kubectl apply -f kubernetes/deployment.yaml
+                    kubectl rollout status deployment/pathnex-web-app
+                    '''
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Multi-Cloud Deployment
+stages:
+    - build
+    - push
+    - deploy
+build:
+    stage: build
+    script:
+        - docker build -y pathnex-web-app .
+push:
+    stage: push
+    script:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push
+deploy_aws:
+    stage: deploy
+    script:
+        - kubectl --context=aws-cluster apply -f kubernetes/deployment.yaml
+deploy_az:
+    stage: deploy
+    script:
+        - kubectl --context=azure-cluster apply -f kubernetes/deployment.yaml
+
+
+#Docker
+docker run -d \
+--name pathnex-mysql \
+-e MYSQL_ROOT_PASSWORD=root \
+mysql:8
+
+# Day 18 — High Availability, Multi-Region, and Auto-scaling
+## Ansible — Configure HAProxy for Load Balancing
+- name: setup HAproxy load balancer
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install HAproxy
+      yum: 
+        name: haproxy 
+        state: present
+    - name: Configure HAproxy
+      template:
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy/cfg
+    - name: start HAproxy service
+      service: 
+        name :haproxy
+        state: started
+        enabled: yes
+
+##Terraform — Multi-Region Auto-scaling Group with ALB
+resource "aws_lb" "pathnex_lb"{
+    name = "pathnex-lb"
+    internal = false
+    load_balancer_type = "application"
+    security_groups_ids = [aws_security_group.allow_ssh_http.id]
+    subnets = [aws_subnet.public.id, aws_subnet.public2.id] 
+
+}
+resource "aws_autoscaling_group" "pathnex_asg"{
+    desired_capacity = 2
+    max_size = 3
+    min_size = 1
+    vpc_zone_identifier = [aws_subnet.public.id, aws_subnet.public2.id]
+    launch_configuration = aws_launch_configuration.pathnex_config.id 
+}
+
+#Kubernetes — Horizontal Pod Autoscaler with Multiple Replicas
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: pathnex-deployment
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-web-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-web-app
+        spec:
+            containers:
+                - name: app
+                  image: ngnix
+                  ports:
+                    - containerPort: 80
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+    name: pathnex-web-app-hpa
+spec:
+    scaleTargetRef: 
+        apiversion: apps/v1
+        kind: Deployment
+        name: pathnex-deployment
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+##Jenkinsfile — Blue-Green Deployment Strategy
+
+pipeline{
+    agent any
+    stages{
+        stage('Build'){
+            steps{
+                sh'''
+                echo "Building docker image"
+                docker build -t pathnex-web-app .
+                '''
+            }
+        }
+        stage('test'){
+            steps{
+                sh'''
+                echo "Testing app"
+                '''
+            }
+        }
+        stage('Blue-green-Deployment'){
+            steps{
+                script{
+                    sh'''
+                    kubectl apply -f kubernetes/blue-deployment.yaml
+                    kubectl apply -f kubernetes/green-deployment.yaml
+                    kubectl rollout status deployment/blue-deployment
+                    kubectl rollout status deployment /green-deployment
+                    '''
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Blue-Green Deployment with Kubernetes
+stages:
+    - build
+    - push
+    - deploy
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-web-app .
+push:
+    stage: push
+    script:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push
+deploy:
+    stage: deploy
+    script: 
+        - kubectl apply -f kubernetes/blue-deployment.yaml
+        - kubectl apply -f kubernetes/green-deployment.yaml
+        - kubectl rollout status deployment/blue-deployment
+        - kubectl rollout status deployment/green-deployment
+
+#Docker
+docker run -d --name pathnex-redis redis
