@@ -1,0 +1,346 @@
+Day 19, 20, 21 — Advanced Monitoring, Logging, and Security
+
+##Ansible — Setup Prometheus for Monitoring
+- name: Setup promethus and grafana
+  hosts: all
+  become: yes
+  tasks:
+    - name: install promethus dependencies
+      yum:
+        name
+            - promethus
+            - promethus-node-exporter
+        state: present
+    - name: start promethus service
+      service:
+        state: started
+        enabled: yes
+
+##Terraform — Setup AWS CloudWatch for Monitoring
+
+resource "aws_cloudwatch_log_group" "pathnex_log_group"{
+    name = "pathnex-log-group"
+}
+
+resource "aws_cloudwatch_log_stream" "pathnex_log_stream" {
+    log_group_name = aws_cloud_log_group.pathnex_log_group.name
+    name = "pathnex-log-stream"
+}
+
+##Kubernetes — Deploy Fluentd for Logging
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: fluentd 
+spec:
+    replicas: 2
+    selector: 
+        matchLabels:
+            app: fluentd 
+    template:
+        metadata:
+            labels:
+                app: fluentd
+        spec:
+            containers:
+                - name: fluentd 
+                  image: fluent/fluentd
+                  ports:
+                    - containerPort: 24224
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: fluentd
+spec:
+    selector:
+        app: fluentd
+    ports:
+        - protocol: TCP
+          port: 24224
+
+##Jenkinsfile — Integrating Prometheus Monitoring in Pipeline
+pipeline{
+    agent any
+    stages{
+        stage('Build'){
+            steps{
+                script{
+                    sh 'echo "Building image"'
+                    docker.build('pathnex-web-app')
+                }
+            }
+        }
+        stage('Test'){
+            steps{
+                sh 'echo "Running test"'
+            }
+        }
+        stage('Monitor Deployment'){
+            steps{
+                script{
+                    sh 'kubectl apply -f kubernetes/deployment.yaml'
+                    sh 'kubectl get pods --watch'
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Prometheus and Logging Integration
+stages:
+    - build
+    - push
+    - deploy
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-web-app .
+push:
+    stage: push
+    script:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push pathnex-web-app
+deploy:
+    stage: deploy
+    script:
+        - kubectl apply -f kubernetes/deployment.yaml
+        - kubectl get pods --watch
+
+##Flask application
+from flash import Flask
+app = Flask(__name__)
+@app.route('/')
+def home():
+    return "Hello pathnex"
+app.run(host='0.0.0.0', port=5000)
+
+DockerFile
+FROM python:3.11
+WORKDIR /opt/pathnex/flask-app
+COPY . /opt/pathnex/flask-app
+RUN pip install flask
+CMD ["python", "/opt/pathnex/flask-app/app.py"]
+
+Day 20 — Security, Hardening, and Compliance
+##Ansible — Configure Firewall with iptables
+- name: Configure firwall with iptables
+  hosts: all
+  become: yes
+  tasks:
+    - name: Set default policies to drop all traffic
+      command: iptables -p INPUT DROP
+    - name: Allow SSH and HTTP
+      command: iptables -A INPUT -p tcp -dport 22 -j ACCEPT
+      command: iptables -A INPUT -p tcp -dport 80 -j ACCEPT
+    - name: save iptables save
+      command: service iptables save
+
+##Terraform — Configure Security Groups for EC2
+resource "aws_security_group" "pathnex_sg"{
+    name_prefix = "pathnex-sg"
+    description = "allow ssh & http"
+
+    ingress{
+        to_port = 22
+        from_port = 22
+        protocol = "TCP"
+        cidr_block = ["0.0.0.0/0"]
+    }
+    ingress{
+        to_port = 80
+        from_port = 80
+        protocol = "TCP"
+        cidr_block = ["0.0.0.0/0"]
+    }
+
+    egress{
+        to_port = 0
+        from_port = 0
+        protocol = "-1"
+        cidr_block = ["0.0.0.0/0"]
+    }
+}
+
+##Kubernetes — RBAC Configuration for Access Control
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+    name: pathnex-cluster-admin 
+subjects:
+    - kind: User
+      name: pathnex-user
+      apiGroup: rbac.authorization.k8s.io
+roleRef:
+    kind: ClusterRole
+    name: cluster-admin
+    apiGroup: rbac.authorization.k8s.io
+
+##Jenkinsfile — Secure Credentials Management
+pipeline{
+    agent any
+    environment{
+        REGISTRY_PASSWORD = credentials('docker-registry-password')
+    }
+    stages{
+        stage('Build'){
+            steps{
+                script{
+                    sh 'echo "Building image"'
+                    docker.build('pathnex-web-app')
+                }
+            }
+        }
+        stage('push'){
+            steps{
+                script{
+                    docker.withRegistry('https://docker.io', 'docker-credentials'){
+                        docker.image('pathnex-web-app').push('latest')
+                    }
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Secure Deployment with Secrets Management
+stages:
+    - build
+    - push
+    - deploy
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-web-app .
+push:
+    stage: push
+    script:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push
+deploy
+    stage: deploy
+    script:
+        - kubectl apply -f kubernetes/deployment.yaml
+        - kubectl get pods --watch
+
+# Docker Networking
+docker network create   pathnex-network
+docker run -dit --name c1 --network pathnex-network ubuntu
+docker run -dit --name c2 --network pathenx-network ubuntu
+
+#Day 21 — Disaster Recovery and Backup Strategies
+## Ansible — Backup and Restore Files
+- name: Backup and restore Files
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create backup of /etc directory
+      command: tar -czvf /tmp/etc-backup.tar.gz /etc
+    - name: Copy backup to remote server
+      copy:
+        src: /tmp/etc-backup.tar.gz
+        dest: /tmp/etc-backup.tar.gz
+    - name: Restore backup from remote server
+      command: tar -xzvf /tmp/etc-backup.tar.gz -C /
+
+##Terraform — Create S3 Bucket with Cross-Region Replication
+resource "aws_s3_bucket" "pathnex_bucket"{
+    bucket = "pathnex-backup-bucket"
+    region = "us-west-1"
+    versioning = {
+        enabled = true
+    }
+}
+
+resource "aws_s3_bucket" "pathnex_backup_bucket_eu"{
+    bucket = "pathnex-backup-bucket-eu"
+    region = "eu-west-1"
+    versioning = {
+        enabled = true
+    }
+}
+
+resource "aws_s3_bucket_object" "pathnex_backup_file"{
+    key = "backup.tar.gz"
+    source = "pathnex-backup.tar.gz"
+}
+
+##Kubernetes — Disaster Recovery with Persistent Volumes
+apiVersion: apps.v1
+kind: StatefulSet
+metadata:
+    name: pathnex-statefullset
+spec:
+    serviceName: "pathnex"
+    replicas: 3
+    selector:
+        matchLabels:
+            app: pathnex
+    template:
+        metadata:
+            labels:
+                app: pathnex
+        spec:
+            containers:
+                - name: ngnix
+                  image: ngnix
+                  volumeMounts:
+                    - mountPath: /usr/share/ngnix/html
+                      name: web-content 
+    
+    volumeClaimTemplates: 
+    - metadata:
+        name: web-content
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resource: 
+            requests:
+                storage: 5Gi
+
+##Jenkinsfile — Backup Strategy for Jenkins Workspace
+pipeline{
+    agent any
+    stages{
+        stage('Build'){
+            steps{
+                sh'''
+                echo "Backing up jenins workspace"
+                tar -czvf /tmp/jenkins-backup.tar.gz ${WORKSPACE}
+                '''
+            }
+        }
+        stage('Restore'){
+            steps{
+                sh'''
+                echo "Restoring jenkins workspace"
+                tar -xzvf /tmp/jenkins-backup.gz -C ${WORKSPACE}
+                '''
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Backup and Restore Deployment Files
+stages: 
+    - backup
+    - restore
+backup:
+    stage: backup
+    script:
+        - tar -czvf /tmp/backup.tar.gz kubernetes/deployment.yaml
+
+restore:
+    stage: restore
+    script:
+        - tar -xzvf /tmp.backup.tar.gz -C kubernetes/
+
+# Docker Compose
+version: '3'
+services:
+    web: 
+        image: ngnix
+        container_name: pathnex-ngnix
+        ports:
+            - "80:80"
