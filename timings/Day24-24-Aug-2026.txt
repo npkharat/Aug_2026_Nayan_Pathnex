@@ -1,0 +1,27 @@
+Day-24 || 24-Aug-2026
+
+Class Assignment:
+    - Morning class: Wathched july - monitoring video - promethus, grafana, ELK stack
+    - coding practice:  Done
+    - like_comment: Done - july monitoring video
+    - Evening class: Done
+    - Self intro: Done
+
+Self Assignment: 
+    - git revision
+    - Interview questions from july batch
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
