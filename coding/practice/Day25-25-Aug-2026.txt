@@ -1,0 +1,210 @@
+Day 22 — Multi-Cluster Kubernetes Management || Day 23 — Serverless Architecture and Microservices
+
+##Ansible — Deploy Nginx Across Multiple Kubernetes Clusters
+
+- name: Deploy Ngnix across multiple kubernetes cluster
+  hosts: localhost
+  tasks:
+    - name: configure kubectl for cluster 1
+      command: kubectl --context=us-east config use-context us-east-cluster
+    - name: Deploy Ngnix on cluster 1
+      command: kubectl apply -f kubernetes/deployment.yaml
+    - name: configure kubectl for cluster 2
+      command: kubectl --context=us-west config use-context us-west cluster
+    - name: deploy ngnix on cluster 2
+      command: kubectl apply -f kubernetes/deployment.yaml
+
+##Terraform — Multi-Region Kubernetes Cluster with EKS and GKE
+resource "aws_eks_cluster" "pathnex_eks" {
+    name = "pathnex-eks-cluster"
+    role_arn = "aws_iam_role_cluster_role.arn
+    vpc_config = {
+        subnet_ids = [aws_subnet.pathnex_subnet.id]
+    }
+    depends_on = [aws_iam_role_policy_attachment.eks_cluster_role_policy]
+}
+
+resource "google_container_cluster" "pathnex_gke"{
+    name = "pathnex-gke-cluster"
+    location = "us-central1-a"
+    initial_node_count = 3
+    node_config = {
+        machine_type = "n1-standard-1"
+    }
+}
+
+##Kubernetes — Federated Deployment with Multiple Clusters
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: pathnex-deployment
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+            app: pathnex-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: ngnix
+                  image: ngnix
+                  ports:
+                    - containerPort: 80
+---
+apiVersion: fedration.k8s.io/v1beta1
+kind: FedratedDeployment
+metadata:
+    name: pathnex-fedrated-deployment
+    namespace: default
+spec:
+    template:
+        spec:
+            replicas: 3
+            selector:
+                matchLabels:
+                    app: pathnex-app
+            template:
+                metadata:
+                    labels:
+                        app: pathnex-app
+                spec:
+                    containers:
+                        - name: ngnix
+                          image: nginx
+                          ports:
+                            - containerPort: 80
+
+##Jenkinsfile — Multi-Cluster Deployment Strategy
+pipeline{
+    agent  any
+    stages{
+        stage('Deploy to cluster 1'){
+            steps{
+                    script{
+                        sh 'kubectl --context=us-east-cluster apply -f kubernetes/deployment.yaml'
+                    }
+            }
+        }
+        stage('Deploy to cluster 2'){
+            steps{
+                script{
+                    sh 'kubectl --context=us-west-cluster apply -f kubernetes/deployment.yaml'
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Multi-Cluster Deployment Strategy
+stages:
+    - deploy
+deploy_cluster_1:
+    stage: deploy
+    script:
+        - kubectl --context=us-east-cluster apply -f kubernetes/deployment.yaml
+deploy_cluster_2:
+    stage: deploy
+    script:
+        - kubectl --context=us-west-cluster apply -f kubernetes/deployment.yaml
+
+##Compose with MySQL
+version: '3'
+services:
+    db: 
+        image: mysql:8
+        container_name: pathnex_db
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+    web:
+        image: nginx
+        container_name: pathnex-web
+
+
+# Day 23 — Serverless Architecture and Microservices
+
+##Ansible — Deploy Lambda Functions Using AWS CLI
+- name: Deploy Lambda Functions Using AWS CLI
+  hosts: localhost
+  tasks:
+    - name: create lambda function
+      command: aws lambda create-function --function-name pathnex-lambda --runtime python3.8 --role arn:aws:iam::123456789012:role/lambda-execution-role --handler lambda_function.lambda_handler --zip-file fileb://lambda.zip
+
+##Terraform — Serverless API Gateway with Lambda Integration
+resource "aws_api_gateway_rest_api" "pathnex_api"{
+    name = "pathnex-api"
+    description = "pathnex api"
+}
+resource "aws_api_gateway_rest_api" "pathnex_lambda"{
+    function_name = "pathnex-lambda"
+    runtime = "python3.8"
+    role = aws_iam_role.lambda_exec_role.arn
+    handler = "lambda_function.lambda_handler"
+    filename = "lambda.zip"
+}
+
+resource "aws_api_gateway_integration" "lambda_integration"{
+    rest_api_id = "aws_api_gateway_rest_api.patnex_api.id"
+    resource_id = aws_api_gateway_resource.pathnex_resource.id
+    http_method = aws_api_gateway_method.pathnex_method.http_method
+    integration_http_method = "POST"
+    type = "AWS_PROXY"
+    uri = "aws_lambda_function.pathnex_lambda.invoke.arn"
+}
+
+##Kubernetes — Deploy Microservices Using Helm
+helm install pathnex-microservice ./microservice-chart
+
+##Jenkinsfile — Deploy Serverless Applications with Lambda
+pipeline{
+    agent any
+    stages{
+        stage('build'){
+            steps{
+                echo 'Building Lambda function'
+                sh 'zip -r lambda.zip lambda/'
+            }
+        }
+        stage('Deploy to AWS lambda'){
+            steps{
+                script{
+                    sh 'aws lambda update-function-code --function-name patnex-lambda --zip-file fileb://lambda.zip'
+                }
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Deploy Lambda Function
+stages:
+    - build
+    - deploy
+build: 
+    stage: build
+    script:
+        - zip -r lambda.zip lambda/
+deploy:
+    stage: deploy
+    script:
+        - aws lambda update-function-code --function-name pathnex-lambda --zip-file fileb://lambda.zip
+
+##Docker
+## Multi-Stage Docker Build
+
+#Stage 1 — Build Stage
+
+FROM maven:3.9-eclipse-temurin-17 AS builder
+WORKDIR /opt/pathnex/java-build
+COPY . /opt/patnex/jav-build
+RUN mvn clean package
+
+# Stage 2 — Production Stage
+
+FROM tomcat:9
+WORKDIR /usr/local/tomcat/webapps
+COPY --from=builder /opt/pathnex/java-build/target/*.war /usr/local/tomcat/webapps/
+EXPOSE 8080
+CMD ["catalina.sh", "run"]
+
