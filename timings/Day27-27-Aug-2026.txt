@@ -1,13 +1,14 @@
 Day-27 || 27-Aug-2026
 
 Class Assignment:
-    - Morning class: 
-    - coding practice:  
-    - like_comment: 
-    - Evening class: 
-    - Self intro: 
+    - Morning class: Done (Watched on youtube)
+    - coding practice:  Done
+    - like_comment: Done
+    - Evening class: Done
+    - Self intro: Done
 
 Self Assignment:  
+    - kafka basic reading
    
 
  
