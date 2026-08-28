@@ -1,0 +1,97 @@
+# Day 26 — Security Best Practices
+##Ansible — Implementing SSH Key-based Authentication
+
+- name: Implementing SSH key Authentication
+  hosts: all
+  become: yes
+  tasks:
+    - name: Generate SSH key pair
+      command: ssh-keygen -t rsa -b 2048 -f /home/user/.ssh/id_rsa -N ""
+    - name: Add SSH key to authorized key
+      authorized_key:
+        user: user
+        state: present
+        key: "{{ lookup('file', /home/user/.ssh/id_rsa.pub')}}"
+
+##Terraform — Enabling VPC Flow Logs for Security
+resource "aws_vpc_flow_log" "pathnex_flow_log"{
+    log_group_name = "pathnex-flow-log"
+    vpc_id = "aws_vpc.pathnex_vpc.id"
+    traffic_type = "ALL"
+    log_destination_type = "cloud-watch-logs"
+}
+
+resource "aws_cloudwatch_log_group" "pathnex_flow_logs_group"{
+    name = "pathnex-flow-logs"
+}
+##Kubernetes — Network Policies for Security
+apiVersion: network.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+    name: pathnex-web-policy
+spec:
+    podSelector:
+        matchLabels:
+            app: pathnex-web-app
+    policyType:
+        - Ingress
+        - Egress
+    ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                    app: pathnex-api
+    egress:
+        - to:
+            - podSelector:
+                matchLabels:
+                    app: pathnex-database
+
+
+
+##Jenkinsfile — Secure the Pipeline with Secrets
+pipeline{
+    agent any
+    environment{
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key)
+    }
+    stages{
+        stage('Build'){
+            steps{
+                script{
+                    echo "Building Docker image"
+                    docker.build('pathnex-web-app').tag('latest')
+                }
+            }
+        }
+        stage('Deploy'){
+            steps{
+                sh'''
+                echo "Deploying to AWS ec2..."
+                aws ec2 run-instance --image-id ami-xxxxxxxxxxxx --count 1 --instance-type t2.micro
+                '''
+            }
+        }
+    }
+}
+
+##GitLab CI/CD — Use GitLab Secrets for Secure Deployment
+stages:
+    - build
+    - deploy 
+
+build:
+    stage: build
+    script:
+        - docker build -t pathnex-web-app .
+deploy:
+    stage: deploy
+    script:
+        - echo "Deploying with secure credentials"
+        - aws ec2 run-instance --image-id ami-xxxxxxxxxxxx --count 1--instance-type t2.micro --access-key @AWS_ACCESS_KEY_ID --secret-key $AWS_SECRET_ACCESS_KEY
+
+##Docker
+# Docker Logs & Inspect
+docker log pathnex-web-app
+docker inspect pathnex-ngnix

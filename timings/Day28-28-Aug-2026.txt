@@ -1,13 +1,14 @@
 Day-28 || 28-Aug-2026
 
 Class Assignment:
-    - Morning class: 
+    - Morning class: Done
     - coding practice:  
-    - like_comment: 
+    - like_comment: Done
     - Evening class: 
-    - Self intro: 
+    - Self intro: Done
 
 Self Assignment: 
+    - SSL/TLS basic understanding
 
 
 
