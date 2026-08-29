@@ -1,0 +1,208 @@
+L1 - Day 27, 28, 29
+
+# Day 27 — Serverless Scaling with Lambda and DynamoDB
+##Ansible — Deploy Serverless Lambda Functions
+
+- name: deploy serverless lambda function 
+  hosts: localhost
+  tasks:
+    - name: Create lambda function
+      command: aws lambda create-function --function-name pathnex-lambda --runtime nodejs14.x --role arn:aws:iam::123456789012:role/lambda-role --handler index.handler --zip-file fileb://lambda.zip
+
+##Terraform — Create DynamoDB Table for Serverless Application
+
+resource "aws_dynomodb_table" "pathnex_table"{
+    name = "pathnex-table"
+    hash-key = "id"
+    billing_mode = "PAY_PER_REQUEST"
+    attribute{
+        name = "id"
+        type = "S"
+    }
+}
+
+##Kubernetes — Deploy Serverless Using Kubeless
+apiVersion:  kubeless.io/v1beta1
+kind: Function 
+metadata:
+    name: pathnex-lambda
+    namespace: default
+spec:
+    runtime: nodejs14
+    handler: index.handler
+    function: |
+        module.exports = function(event, context) {
+            context.succeed('Hello World');
+        }
+
+Jenkinsfile — Lambda Function Deployment Pipeline
+pipline{
+    agent any
+    stages{
+        stage('Build'){
+            steps{
+                sh'''
+                echo "Building lambda function"
+                zip -r lambda.zip lambda/
+            }
+        }
+        stage('Deploy to lambda'){
+            steps{
+                script{
+                    sh 'aws lambda update-functio-code --function-name pathnex-lambda --zip-file fileb://lambda.zip'
+                }
+            }
+        }
+    }
+}
+
+##Docker
+# Docker Exec & Resource Limits
+docker exec -it pathnex-ngnix   bash
+docker stats
+
+# Bash
+docker run -d --memory="512m" --cpus="1.0" ngnix
+
+------------------------------------------------------
+# Day 28 — Advanced Networking with VPCs and Peering
+------------------------------------------------------
+
+## Ansible — Set Up VPC Peering Between AWS Accounts
+
+- name: Setup VPC peering between AWS Accounts
+  hosts: localhost
+  tasks:
+    - name: create VPC peering connection
+      command: aws ec2 create-vpc-peering-connection --vpc-id vpc-12345678 --peer-vpc-id vpc-87654321
+
+##Terraform — VPC Peering and Route Tables
+resource "aws_vpc_peering_connection" "pathnex_peering"{
+    vpc_id = aws_vpc.pathnex.id
+    peer_vpc_id = aws_vpc.peer_vpc.id
+}
+
+resource "aws_route" "pathnex_route" {
+    route_table_id = aws_route_table.pathnex_rt.id
+    destination_cidr_block = "10.0.0.0/16"
+    vpc_peering_connection_id = aws_vpc_peering_connection.pathnex_peering.id
+
+}
+
+##Kubernetes — Multi-Cluster VPC Peering and Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+    name: pathnex-vpc-policy
+spec:
+    podSelector:
+        matchLabels:
+            app: pathnex-app
+    ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                    app: pathnex-db
+
+
+##Docker
+# Docker Save, Load & Backup
+
+docker save -o pathnex-ngnix.tar pathnex-ngnix
+
+docker load -i pathnex-ngnix.tar
+
+##bash
+docker run -rm -v pathenx-volume:/data -v $(pwd):/backup ubuntu tar czf /backup pathnex-backup.tar.gz /data
+
+
+------------------------------------------------------
+# Day 29 — Final Project Setup and Configuration
+------------------------------------------------------
+
+
+##Ansible — Complete Deployment Setup
+
+- name: Deployment Setup
+  hosts: all
+  become: yes
+  tasks:
+    - name: Deploy ngnix, MYSQL, Redis with docker
+      command: docker-compose -f /path/to/docker-compose.yml up -d 
+
+## Terraform — Provisioning Multi-Tier Application with VPC and Security
+resource "aws_vpc" "pathnex_vpc" {
+    cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_instance" "pathnex_app"{
+    ami = "ami-xxxxxxxxxxxx"
+    instance_id = "t2.medium"
+    subnet_id = aws_subnet.pathnex_subnet.id
+    security_groups = [aws_security_group.pathnex_sg.name]
+}
+
+##Kubernetes — Deploy Full Application Stack
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    - name: pathnex-app
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
+        spec:
+            containers:
+                - name: ngnix
+                  image: ngnix
+                  ports:
+                    - containerPort: 80
+---
+apiversion: v1
+kind: Service
+metadata:
+    name: pathnex-app-service
+spec:
+    selector: 
+        app: pathnex-app
+    ports:
+        - port: 80
+          targetPort: 80
+
+##Docker
+# Docker Security & Cleanup
+FROM ngnix
+RUN useradd pathnexuser
+USER pathnexuser
+
+# Commands
+docker container prune
+docker image prune
+docker volume prune
+docker network prune
+docker system prune -a 
+
+# Final Docker Project
+version: 3
+services:
+    fronend:
+        image: ngnix
+        container_name: pathnex-frontend
+        ports:
+            - "80:80"
+    backend:
+        build: ./backend
+        container_name: pathnex-backend
+        ports:
+            - "5000:5000"
+    database:
+        image: mysql:8
+        container_name: pathnex-mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+    
