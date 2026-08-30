@@ -1,15 +1,21 @@
-Day-20 || 20-Aug-2026
+Day-30 || 30-Aug-2026
 
 Class Assignment:
-    - Morning class: Done - watched recorded video (Was busy in office work)
-    - coding practice:  Done
+    - Morning class: Done 
+    - coding practice:   - Working on project | IAC done
     - like_comment: Done
     - Evening class: Done
     - Self intro: Done
 
 Self Assignment:  
-    - terreform note
-    - basic chatgpt on terrraform concepts
+    - Devsecops pdf reading
+    - Working on project - 3 tier application 
+     - IAC: Done
+     - Pipeline: Pending
+     - Deployment: Pending
+     - TLS-Certificate: Pending
+     - Monitoring: Pending
+
  
 
 
