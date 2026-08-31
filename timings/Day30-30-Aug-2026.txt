@@ -1,0 +1,28 @@
+Day-30 || 30-Aug-2026
+
+Class Assignment:
+    - Morning class: Done 
+    - coding practice:   - Working on project | IAC done
+    - like_comment: Done
+    - Evening class: Done
+    - Self intro: Done
+
+Self Assignment:  
+    - Devsecops pdf reading
+    - Working on project - 3 tier application 
+     - IAC: Done
+     - Pipeline: Pending
+     - Deployment: Pending
+     - TLS-Certificate: Pending
+     - Monitoring: Pending
+
+ 
+
+
+
+
+
+
+
+
+
