@@ -27,78 +27,7 @@ resource "aws_instance" "bastion" {
 
   associate_public_ip_address = true
 
-  user_data = <<-EOF
-              #!/bin/bash
-
-              set -e
-
-              # Update system
-              dnf update -y
-
-              # Install useful packages
-              dnf install -y \
-                git \
-                curl \
-                wget \
-                unzip \
-                jq \
-                tar \
-                gzip
-
-              # ------------------------------------------------
-              # AWS CLI
-              # ------------------------------------------------
-
-              if ! command -v aws &> /dev/null; then
-
-                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
-                  -o "/tmp/awscliv2.zip"
-
-                unzip -q /tmp/awscliv2.zip -d /tmp
-
-                /tmp/aws/install
-
-              fi
-
-              # ------------------------------------------------
-              # kubectl
-              # ------------------------------------------------
-
-              curl -LO "https://dl.k8s.io/release/v1.36.0/bin/linux/amd64/kubectl"
-
-              install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
-              rm -f kubectl
-
-              # ------------------------------------------------
-              # Helm
-              # ------------------------------------------------
-
-              curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \
-                | bash
-
-              # ------------------------------------------------
-              # Docker
-              # ------------------------------------------------
-
-              dnf install -y docker
-
-              systemctl enable docker
-              systemctl start docker
-
-              usermod -aG docker ec2-user
-
-              # ------------------------------------------------
-              # EKS kubeconfig
-              # ------------------------------------------------
-
-              mkdir -p /home/ec2-user/.kube
-
-              chown -R ec2-user:ec2-user /home/ec2-user/.kube
-
-              echo "Bastion setup completed."
-
-              EOF
+  user_data = file("${path.module}/userdata.sh")
 
   tags = {
     Name = "${var.cluster_name}-bastion"

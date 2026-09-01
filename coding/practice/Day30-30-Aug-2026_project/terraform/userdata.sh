@@ -1,12 +1,26 @@
+user_data = <<-EOF
 #!/bin/bash
 
-set -e
+set -euxo pipefail
 
+# ==========================================
 # Update system
+# ==========================================
+
 dnf update -y
 
+# ==========================================
 # Install basic packages
-dnf install -y git wget curl unzip java-17-amazon-corretto
+# ==========================================
+
+dnf install -y \
+  git \
+  wget \
+  curl \
+  unzip \
+  tar \
+  gzip \
+  java-17-amazon-corretto
 
 # ==========================================
 # Install Docker
@@ -29,14 +43,14 @@ curl -fsSL https://pkg.jenkins.io/redhat-stable/jenkins.io-2026.key \
 
 rpm --import /etc/pki/rpm-gpg/jenkins.io-2026.key
 
-cat > /etc/yum.repos.d/jenkins.repo <<EOF
+cat > /etc/yum.repos.d/jenkins.repo <<'REPO'
 [jenkins]
 name=Jenkins
 baseurl=https://pkg.jenkins.io/redhat-stable/
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/jenkins.io-2026.key
 enabled=1
-EOF
+REPO
 
 dnf install -y jenkins
 
@@ -60,15 +74,26 @@ curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \
 # Install kubectl
 # ==========================================
 
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+curl -LO "https://dl.k8s.io/release/\$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 
 install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 rm -f kubectl
 
 # ==========================================
-# Display versions in log
+# Create Kubernetes config directory
 # ==========================================
+
+mkdir -p /home/ec2-user/.kube
+chown -R ec2-user:ec2-user /home/ec2-user/.kube
+
+# ==========================================
+# Display versions
+# ==========================================
+
+echo "========================================="
+echo "Installed versions"
+echo "========================================="
 
 docker --version
 java -version
@@ -80,3 +105,5 @@ kubectl version --client
 echo "========================================="
 echo "Bastion setup completed successfully!"
 echo "========================================="
+
+EOF
