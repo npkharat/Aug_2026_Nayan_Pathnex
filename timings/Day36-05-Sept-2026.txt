@@ -6,7 +6,7 @@ Class Assignment:
     - Evening class: Done
 
 Self Assignment:  
-    - 
+    - ArgoCD, Helm, CICD revision Done
     
 
  
