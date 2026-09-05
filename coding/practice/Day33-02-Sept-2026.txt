@@ -1,0 +1,126 @@
+# Day 03 — Users, SGs, Env Vars
+
+## Ansible — Create User
+
+- name: Create pathnex-user 
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create pathnex-user
+      user:
+        name: pathnex-user
+        state: present
+        shell: /bin/bash
+
+## Terraform — Security Group (r6i.4xlarge EC2)
+provider "aws" {
+    region = "ap-south-01"
+}
+
+resource "aws_security_group" "pathnex_sg_http_ssh"{
+    name = "pathnex-sg-ssh-http"
+    descritpion = "enable ssh and https"
+
+    ingress{
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_block = ["0.0.0.0/0"]
+    }
+    ingress{
+        from_port = 80
+        to_port = 80
+        protocol = "tcp"
+        cidr_block = ["0.0.0.0/0"]
+    }
+
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_block = ["0.0.0.0/0"]
+    }
+}
+
+## Kubernetes — Add Environment Variables
+apiVersion: v1
+kind: Pod 
+metadata:
+    name: pathnex-pod 
+spec:
+    containers:
+        - name: app
+          image: ngnix
+          ports:
+            - containerPort: 80
+          env:
+            - name: APP_ENV
+              value: "production"
+
+## Shell Script — Check File Exists
+#!/bin/bash
+FILE="/tmp/pathnex.txt"
+
+if [ -f "$FILE" ]; then
+    echo "File Exists"
+else:
+    echo "File does not Exists"
+fi
+
+NodeJS Build
+## Jenkins Pipeline — NodeJS Build
+
+pipeline{
+    agent any
+    tools {
+        nodejs 'NodeJS-16'
+    }
+        stages{
+            stage('Checkout'){
+                steps{
+                    git branch: 'main', url 'https://github.com/Pathnex/sample-node-app.git'
+                }
+            }
+            stage('Install dependencies'){
+                steps{
+                    sh 'npm install'
+                }
+            }
+            stage('Test'){
+                steps{
+                    sh 'npm test'
+                }
+            }
+            stage('Build'){
+                steps{
+                    sh 'npm run build'
+                }
+            }
+            
+        }
+}
+
+## GitLab CI — NodeJS Build
+stages:
+    - install
+    - test
+    - build
+node-install:
+    stage: install
+    image: node:16
+    script:
+        - git clone https://github.com/Pathnex/sample-node-app.git
+        - cd smaple-node-app
+        - npm install
+test:
+    stage: test
+    image: node:16
+    script:
+        - cd sample-node-app
+        - npm test
+build:
+    stage: build
+    image: node:16
+    script:
+        - cd sample-node-app
+        - npm run build
