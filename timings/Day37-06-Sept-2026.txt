@@ -6,7 +6,7 @@ Class Assignment:
     - Self intro: Done
 
 Self Assignment:  
-    - 
+    - Revision Ansible, Terraform, SRE, DevSecOps
 
  
 
