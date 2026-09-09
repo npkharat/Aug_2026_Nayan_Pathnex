@@ -1,0 +1,79 @@
+Day 07
+
+Ansible - 
+- name: Setup Ngnix with custom config
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install ngnix
+      yum:
+        name: ngnix
+        state: present
+    - name: copy customer ngnix.config
+      copy:
+        src: ngnix.config
+        dest: /etc/ngnix/ngnix/config
+    - name: start ngnix service
+      service:
+        name: ngnix
+        state: started
+        enabled: yes
+
+AWS - 
+resource "aws_iam_role" "ec2_role"{
+    name: "pathnex_ec2_role"
+    assume_role_pollicy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [{
+            Action = "sts:AssumeRole"
+            Effect = "Allow"
+            Principal = {
+                Service = "ec2.amazonaws.com"
+            }
+        }]
+    })
+}
+
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-xxxxxxxxxxxxxx"
+    instance_type = "t2.medium"
+    iam_instance_profile = aws_iam_role.ec2_role.name
+    tags = {
+        Name = "pathnex-ec2"
+    }
+}
+
+Kubernetes - 
+kind: ConfigMap
+apiVersion: v1
+metadata:
+    name: pathnex-configmap 
+data:
+    app.property: |
+        key= value
+---
+kind: Secret
+apiVersion: v1
+metadata:
+    name: pathnex-secret 
+type: Opaque
+data:
+    password: feoiwflnoewjiowendoew
+
+Shell - 
+#!/bin/bash
+tar -czf /var/log/awchived_logs.tar.gz /var/log/*/log
+
+Docker & java appliccation - 
+
+class hello{
+    public static void main(String[] args){
+        system.out.println("hello pathnex")
+    }
+}
+
+FROM openjdk:17
+WORKDIR /opt/pathnex/java-app
+COPY hello.java /opt/pathnex/java-app/
+RUN javac /opt/pathnex/java-app/hello.java
+CMD ["java", "-cp", "/opt/pathnex/java-app", "hello" ]
