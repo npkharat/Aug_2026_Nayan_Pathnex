@@ -1,0 +1,72 @@
+L1 - Day 6
+# Day 06 — DEBUG DAY
+
+- name: Install Ngnix
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Ngnix
+      yum:
+        name: ngnix
+        state: present
+
+resource "aws_instance" "pathnex_ec2"{
+    ami = "ami-xxxxxxxxxxxxx"
+    instance_type = "t2.micro"
+    tags = {
+        Name = "pathnex-ec2"
+        Owner = "pathnex-nayan"
+        Severity = "P1"
+    }
+}
+
+apiVersion: v1
+kind: Pod
+metadata:
+    name: pathnex-pod
+spec:
+    containers:
+        - name: app
+          image: ngnix
+
+pipeline{
+    agent any
+    stages{
+        stage('Checkout'){
+            steps{
+                git branch: 'main' , url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('Build'){
+            steps{
+                sh'''
+                mvn clean compile || {echo "Compiled failed"; exit 1}
+                '''
+            }
+        }
+        stage('test'){
+            steps{
+                sh'''
+                mvn test || {echo "test failed"; exit 1}
+                '''
+            }
+        }
+    }
+}
+
+stages:
+    - build
+    - test
+build:
+    stage: build
+    image: maven:3.8.1-jdk-17
+    script:
+        - git clone https://github.com/Pathnex/sample-java-app.git
+        - cd sample-java-app
+        - mvn clean compile
+test:
+    stage: test
+    image: maven: 3.8.1-jdk-17
+    script:
+        - mvn test || {echo "Test failed"; exit 1}
+
