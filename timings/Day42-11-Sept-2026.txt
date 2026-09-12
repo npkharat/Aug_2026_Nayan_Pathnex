@@ -6,7 +6,8 @@ Class Assignment:
     - Self intro: Done
 
 Self Assignment:  
-    - Quick revision pdf
+    - docker practical
+
   
 
 
