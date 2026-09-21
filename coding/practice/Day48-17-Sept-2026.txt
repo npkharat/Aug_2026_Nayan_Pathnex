@@ -1,102 +1,156 @@
-# Day 15 — Java, S3 Bucket, CronJob, File Reader
-## Ansible — Install Java & Set JAVA_HOME
+Day 16 — Advanced CloudFormation & Multi-Region Deployments
+Ansible — Create and Start EC2 Instances
 
-- name: Install java and set JAVA_HOME
-  hosts: all
-  become: yes
+Ansible — Create and Start EC2 Instances
+
+- name: Create and start ec2
+  hosts: localhost
+  become: true
   tasks:
-    - name: Install java
-      yum:
-        name: java-11-openjdk
-        state: present
-    - name: set JAVA_HOME
-      lineinfile:
-        path: /etc/profile
-        line: 'export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+    - name: create ec2 in us-east-1
+      ec2_instance:
+        name: pathnex-ec2-us-east-1
+        key_name: pathnex-key
+        region: us-east-1
+        instance_type: t2.micro
+        image: ami-xxxxxxxxxxxxxxx
+        wait: yes
+    - name: Create instance in us-west-1
+      ec2_instance:
+        name: instance-us-west
+        key_name: pathnex-key
+        region: us-west-1
+        instance_type: t2.micro
+        image: ami-xxxxxxxxxxxxxxx
+        wait: yes
+    
 
-
-## Terraform — Create S3 Bucket
-resource "aws_s3_bucket" "pathnex_s3"{
-    bucket = "pathnex-devops-bucket"
+##Terraform — Multi-Region VPC with EC2
+resource "aws_vpc" "main_us_east"{
+    cidr_block = "10.0.0.0/16"
+    region = "us_east_1"
     tags = {
-        Name = "pathnex-s3-bucket"
+        Name = "pathnex-us-east-1-vpc"
     }
 }
 
-## Kubernetes — CronJob
-kind: CronJob
-apiVersion: batch/v1
+resource "aws_vpc" "main_us_west"{
+    cidr_block = "10.1.0.0/16"
+    region = "us-west-1"
+    tags = {
+        Name = "pathnex-us-west-1-vpc"
+    }
+}
+
+resource "aws_instance" "pathnex_ec2_us_west"{
+    ami = "ami-xxxxxxxxxxxxxxx"
+    instance_type = "t2.micro"
+    region = "us-west-1"
+    tags = {
+        name = "pathnex-ec2-us-west-1"
+    }
+}
+
+##Kubernetes — Multi-Cluster Deployment with Federation
+kind: Deployment
+apiVersion: apps/v1
 metadata:
-    name: pathnex-cron
+    name: pathnex-deployment
 spec:
-    schedule: "*/5 * * * *"
-    jobTemplate:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-app
         spec:
-            template:
-                spec:
-                    containers:
-                        - name: job
-                          image: busybox
-                          command: ["sh", "-c", "echo pathnex cronjob running"]
-                    restartPolicy: OnFailure
+            containers:
+                - name: app
+                  image: nginx
+                  ports:
+                    - containerPort: 80
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: pathnex-service
+spec:
+    selector:
+        app: pathnex-app
+    ports:
+        - protocol: TCP
+          port: 80
 
-
-
-## Shell Script — Read File Line-by-Line
-!#/bin/bash
-FILE = "/etc/passwd"
-while read line;
-do
-    echo "line: $line"
-done < $FILE
-
-
-## Jenkins Pipeline — Slack Notification
+##Jenkinsfile — Deploy to Multi-Cluster Environments
 pipeline{
     agent any
     environment{
-        INSTITUTE_NAME= "pathnex"
-        SLACK_CHANNEL = "#devops"
+        CLUSTER = "us-east-1"
     }
-
     stages{
-        stage('Checkout'){
-            steps{
-                git url: 'https://github.com/Pathnex/sample-java-app.git'
-            }
-        }
         stage('Build'){
             steps{
-                sh'''
-                mvn clean compile
-                '''
+                script{
+                    docker.build('pathnex-web-app')
+                }
             }
         }
-    }
-    post{
-        success{
-            slackSend(channel: "$SLACK_CHANNEL",
-            message: "SUCCESS: $INSTITUTE_NAME Build #${env.BUILD_NUMBER}")
+        stage('test'){
+            steps{
+                sh 'echo testing'
+            }
         }
-        failure{
-            slackSend(channel: "$SLACK_CHANNEL",
-            message: "FAILURE: $INSTITUTE_NAME Build #${env.BUILD_NUMBER}")
+        stage('Deploy'){
+            steps{
+                script{
+                    if (env.CLUSTER == 'us-east-1'){
+                        sh'''
+                        kubectl --context=us-east-1 apply -f kubernetes/deployment.yaml
+                    }
+                    else{
+                        sh'''
+                        kubectl --context=us-west-1 apply -f kubernetes/deployment.yaml
+                    }
+                }
+            }
         }
     }
 }
 
-## GitLab CI — Slack Notification
+#GitLab CI/CD — Multi-Region Deployment with Kubernetes
 stages:
     - build
-variables:
-    INSTITUTE_NAME: "pathnex"
-    SLACK_WEBHOOK: "https://hooks.slack.com/services/XXXXX/YYYYY/ZZZZZ"
+    - push
+    - deploy
 build:
     stage: build
-    image: maven:3.8.1-jdk-17
     script:
-        - git clone https://github.com/Pathnex/sample-java-app.git
-        - cd sample-java-app
-        - mvn clean comp
-        - curl -X POST -H 'Content-type:
-        application/json' --data '{"text": "Build success for pathnex"}' $SLACK_WEBHOOK
+     - docker build -t pathnex-web-app .
+push:
+    stage: push
+    script:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push pathnex-web-app
+deploy:
+    stage: deploy
+    script:
+        - |
+          if [ $COMMMIT_REF == "main" ];
+          then
+            kubectl --context=us-east-1 apply -f kubernetes/prod-deployment.yaml
+          else
+            kubectl --context=us-west-1 apply -f kubernetes/dev-devlopment.yaml
+        fi
+
+##Shell
+#!/bin/bash
+echo "Hello pathnex"
+
+#DockerFile
+FROM ubuntu:22.04
+WORKDIR /opt/pathnex/scripts
+COPY start.sh /opt/pathnex/scripts
+RUN chmod +x /opt/pathnex/scripts/start.sh
+CMD ["/opt/pathnex.script.shart.sh"]
