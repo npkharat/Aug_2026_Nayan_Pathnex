@@ -1,0 +1,139 @@
+# Day 17 — Multi-Cloud Deployments, Auto-healing, and Advanced CI/CD
+
+## Ansible — Auto-healing Web Servers with Systemd
+
+- name: cnfigure auto-scaling for webservers
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+    - name: auto start for nginx service
+      lineinfile:
+        path: /etc/systemd/system/nginx.service.d/override.config 
+        line: "Restart=always"
+        create: yes
+    - name: reload nginx
+      command: systemctl demon-reload
+
+
+##Terraform — Multi-Cloud Infrastructure with AWS and Azure
+
+resource "aws_vpc" "main" {
+    cidr_block = "10.0.0.0/16"
+}
+
+resource "awurerm_virtual_network" "main"{
+    name = "pathnex-vnet"
+    location = "East US"
+    address_space = ["10.0.0.0/16"]
+    resource_group_name = azurerm_resource_group.main.name
+}
+
+resource "azurerm_linux_virtual_machine" "pathnex_vm" {
+    name = "pathnex-azure-vm"
+    resource_group_name = "azurerm_resource_group.main.location"
+    size = "Standard B1s"
+    admin_username = "azureuser"
+    admin_password = "Password123"
+}
+
+##Kubernetes — Self-Healing with Liveness and Readiness Probes
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: pathnex-web-app
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: pathnex-web-app
+    template:
+        metadata:
+            labels:
+                app: pathnex-web-app
+        spec:
+            containers:
+                - name: app
+                  image: nginx
+                  ports:
+                    - containerPort: 80
+                  livenessProbe:
+                    httpGet:
+                        path: /health
+                        port: 80
+                    initialDelaySeconds: 5
+                    periodSeconds: 10
+                  readinessProbe:
+                    htteGet:
+                        path: /health
+                        port: 80
+                    initialDelaySeconds: 5
+                    periodSeconds: 10
+
+##Jenkinsfile — Rolling Deployments with Kubernetes
+pipeline{
+    agent any
+    environment{
+        IMAGE_NAME = 'pathnex-web-app'
+    }
+    stages{
+        stage('Build'){
+            steps{
+                sh'''
+                echo "Building docker image"
+                docker build -t "${IMAGE_NAME}"
+            }
+        }
+        stage('Test'){
+            steps{
+                script{
+                    sh'''
+                    echo "Running tests"
+                    '''
+                }
+            }
+        }
+        stage('Deply'){
+            steps{
+                scripts{
+                    sh'''
+                    kubectl apply -f kubernetes/deployment.yaml
+                    kubectl rollout status deployment/pathnex-web-app
+                    '''
+                }
+            }
+        }
+    }
+}
+
+
+##GitLab CI/CD — Multi-Cloud Deployment
+stages:
+    - build
+    - push
+    - deploy
+build:
+    stage: build
+    stage:
+        - docker build -t pathnex-web-app .
+push:
+    stage: push
+    stage:
+        - docker login -u "$USERNAME" -p "$PASSWORD"
+        - docker push
+deploy_aws:
+    stage: deploy
+    stage:
+        - kubectl --context=aws-cluster apply -f kubernetes/deployment.yaml
+deploy_az:
+    stage: deploy
+    script:
+        - kubectl --context=azure-cluster apply -f kubernetes/deployment.yaml
+
+#Docker
+docker run -d --name pathnex-mysql -e MYSQL_ROOT_PASSWORD=root mysql:8
